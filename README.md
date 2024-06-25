@@ -21,3 +21,4 @@ pip install mysqlclient
 
 ## Update Note
 
+240625. 프로젝트 초기화
