@@ -1,7 +1,7 @@
 # Inventory Helper
 
 ---
-이 Repository는 KT Aivle School 5기 AI 트랙 19의 빅프로젝트 코드 중 BE 파트의 내용을 포함하고 있습니다.
+이 Repository는 KT Aivle School 5기 AI 트랙 19조의 빅 프로젝트 코드 중 BE 파트의 내용을 포함하고 있습니다.
 
 ---
 ##  Requirement
@@ -21,4 +21,4 @@ pip install mysqlclient
 
 ## Update Note
 
-240625. 프로젝트 초기화
+- 2024.06.25 프로젝트 초기화
