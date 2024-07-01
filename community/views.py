@@ -17,3 +17,9 @@ class ArticleListView(APIView):
         result_page = paginator.paginate_queryset(articles, request)
         serializer = ArticleSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+from rest_framework import generics
+
+class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Article.objects.all()
+    serializer_class = ArticleSerializer
