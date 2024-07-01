@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -73,12 +74,12 @@ WSGI_APPLICATION = "bigproject.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "mysql.connector.django",
+        "ENGINE": "django.db.backends.mysql",
         "NAME": 'aivle',
         'USER': 'root',
-        'PASSWORD': 'root',
+        'PASSWORD': 'aivle',
         'HOST': 'localhost',
-        'POST': '3306',
+        'PORT': '3306',
     }
 }
 
