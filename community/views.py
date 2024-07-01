@@ -5,6 +5,7 @@ from .models import Article
 from .serializers import ArticleSerializer
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated
+from .permissions import IsOwnerOrReadOnly  
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
@@ -25,6 +26,7 @@ from rest_framework import generics
 class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
 class ArticleCreateView(CreateAPIView):
     queryset = Article.objects.all()
