@@ -1,15 +1,22 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.generics import (
+    CreateAPIView,
+    RetrieveUpdateDestroyAPIView,
+    ListCreateAPIView
+)
+from rest_framework.permissions import IsAuthenticated
+
 from .models import Article, Comment
 from .serializers import ArticleSerializer, CommentSerializer
-from rest_framework.generics import CreateAPIView
-from rest_framework.permissions import IsAuthenticated
-from .permissions import IsOwnerOrReadOnly  
+from .permissions import IsOwnerOrReadOnly
+
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_query_param = 'page'
+
 
 class ArticleListView(APIView):
     pagination_class = StandardResultsSetPagination
@@ -20,34 +27,33 @@ class ArticleListView(APIView):
         result_page = paginator.paginate_queryset(articles, request)
         serializer = ArticleSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-    
-from rest_framework import generics
 
-class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):
+
+class ArticleDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
     def retrieve(self, request, *args, **kwargs):
         article = self.get_object()
-        article.increment_view_count()  # 조회수 증가
+        article.increment_view_count()
         serializer = self.get_serializer(article)
         return Response(serializer.data)
+
 
 class ArticleCreateView(CreateAPIView):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
-    permission_classes = [IsAuthenticated]  # 로그인한 사용자만 게시글 생성 가능
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)  # 게시글 작성자를 현재 로그인한 사용자로 설정
-        
+        serializer.save(user=self.request.user)
 
-class CommentListCreateView(generics.ListCreateAPIView):
+
+class CommentListCreateView(ListCreateAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]  # 로그인한 사용자만 댓글을 작성할 수 있음
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        # 댓글 작성자 설정
         serializer.save(user=self.request.user)
