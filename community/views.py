@@ -1,8 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
-from .models import Article
-from .serializers import ArticleSerializer
+from .models import Article, Comment
+from .serializers import ArticleSerializer, CommentSerializer
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from .permissions import IsOwnerOrReadOnly  
@@ -41,3 +41,13 @@ class ArticleCreateView(CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)  # 게시글 작성자를 현재 로그인한 사용자로 설정
+        
+
+class CommentListCreateView(generics.ListCreateAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]  # 로그인한 사용자만 댓글을 작성할 수 있음
+
+    def perform_create(self, serializer):
+        # 댓글 작성자 설정
+        serializer.save(user=self.request.user)
