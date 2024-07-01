@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -35,7 +36,13 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
+    # library
     "rest_framework",
+    "rest_framework_simplejwt",
+    'rest_framework_simplejwt.token_blacklist',
+
+    # application
     "account",
 ]
 
@@ -123,6 +130,7 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
 # Cache (Redis)
 
 CACHES = {
@@ -133,4 +141,35 @@ CACHES = {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
     }
+}
+
+# rest framework setting
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+# jwt setting
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # 액세스 토큰의 유효 기간
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # 리프레시 토큰의 유효 기간
+    'ROTATE_REFRESH_TOKENS': False,  # 리프레시 토큰을 사용할 때마다 새 리프레시 토큰을 발급할지 여부를 설정
+    'BLACKLIST_AFTER_ROTATION': True,  # 리프레시 토큰이 회전된 후 이전 리프레시 토큰을 블랙리스트에 추가할지 여부
+
+
+    'ALGORITHM': 'HS256',  # JWT 서명에 사용할 알고리즘
+    'SIGNING_KEY': SECRET_KEY,  # JWT 서명에 사용할 키
+    'VERIFYING_KEY': None,  # JWT 검증에 사용할 공개 키
+    'AUDIENCE': None,  # JWT의 'aud' 클레임을 검증할 때 사용할 값
+    'ISSUER': None,  # JWT의 'iss' 클레임을 검증할 때 사용할 값
+
+    'AUTH_HEADER_TYPES': ('Bearer',),  # Authorization 헤더에서 JWT를 찾을 때 사용할 타입을 설정
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'email',  # JWT에서 사용자 ID를 찾을 때 사용할 필드를 설정
+    'USER_ID_CLAIM': 'user_id',  # JWT 클레임에서 사용자 ID를 찾을 때 사용할 클레임 이름을 설정
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),  # 사용할 토큰 클래스들을 설정
+    'TOKEN_TYPE_CLAIM': 'token_type',  # JWT 클레임에서 토큰 타입을 찾을 때 사용할 클레임 이름을 설정
+    'JTI_CLAIM': 'jti',  # JWT의 JTI 클레임 이름을 설정
 }

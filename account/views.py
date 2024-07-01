@@ -3,10 +3,13 @@ from django.contrib.auth.hashers import make_password
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.parsers import JSONParser
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from account.models import User
-from account.serializers import UserSerializer
+from account.serializers import (
+    UserSerializer,
+    LoginSerializer,
+)
 
 
 class CheckEmailDuplicateView(APIView):
@@ -32,13 +35,16 @@ class SignUpAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class Login(APIView):
+class LoginView(APIView):
     def post(self, request):
-        data = JSONParser().parse(request)
-        search_email = data['email']
-        obj = User.objects.get(email=search_email)
+        serializer = LoginSerializer(data=request.data)
 
-        if data['password'] == obj.password:
-            return Response(status=200)
-        else:
-            return Response(status=400)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
