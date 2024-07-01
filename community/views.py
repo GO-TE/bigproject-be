@@ -28,6 +28,12 @@ class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ArticleSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
+    def retrieve(self, request, *args, **kwargs):
+        article = self.get_object()
+        article.increment_view_count()  # 조회수 증가
+        serializer = self.get_serializer(article)
+        return Response(serializer.data)
+
 class ArticleCreateView(CreateAPIView):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer

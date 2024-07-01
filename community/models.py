@@ -25,6 +25,10 @@ class Article(models.Model):
     view = models.BigIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
+    def increment_view_count(self):
+        self.view += 1
+        self.save(update_fields=['view'])
+
 class Comment(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
