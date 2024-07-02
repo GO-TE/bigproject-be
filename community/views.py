@@ -6,7 +6,7 @@ from rest_framework.generics import (
     RetrieveUpdateDestroyAPIView,
     ListAPIView
 )
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated,AllowAny
 
 from .models import Article, Comment
 from .serializers import ArticleSerializer, CommentSerializer
@@ -19,6 +19,7 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 
 class ArticleListView(APIView):
+    permission_classes = [AllowAny]
 
     def get(self, request):
         articles = Article.objects.all().order_by('-created_at')
@@ -65,7 +66,7 @@ class CommentListView(ListAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     pagination_class = StandardResultsSetPagination
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
 
 class CommentDetailView(RetrieveUpdateDestroyAPIView):
