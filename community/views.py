@@ -33,6 +33,9 @@ class ArticleListView(APIView):
         if username:
             articles = articles.filter(user__username__icontains=username)
 
+        if not articles.exists():
+            return Response({"articles": [], "message": "No articles found matching your query."}, status=200)
+ 
         serializer = ArticleSerializer(articles, many=True)
         return Response(serializer.data)
 
