@@ -14,6 +14,7 @@ from .permissions import IsOwnerOrReadOnly
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
+    page_size_query_param = 'page_size'
     page_query_param = 'page'
 
 
@@ -22,10 +23,16 @@ class ArticleListView(APIView):
 
     def get(self, request):
         articles = Article.objects.all().order_by('-created_at')
-        paginator = self.pagination_class()
-        result_page = paginator.paginate_queryset(articles, request)
-        serializer = ArticleSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        paginate = request.query_params.get('page', None)
+
+        if paginate:
+            paginator = self.pagination_class()
+            result_page = paginator.paginate_queryset(articles, request)
+            serializer = ArticleSerializer(result_page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        else:
+            serializer = ArticleSerializer(articles, many=True)
+            return Response(serializer.data)
 
 
 class ArticleDetailView(RetrieveUpdateDestroyAPIView):
