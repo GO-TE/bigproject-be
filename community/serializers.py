@@ -4,7 +4,7 @@ from .models import Article, Comment
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ['id', 'article','user', 
+        fields = ['id', 'article', 'user',
                   'message', 'created_at']
 
 class ArticleSerializer(serializers.ModelSerializer):
@@ -12,9 +12,9 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Article
-        fields = ['id', 'user', 'image',
-                  'category', 'title', 'content', 
-                  'created_at', 'updated_at', 'view', 
+        fields = ['id', 'user', 'image', 
+                  'category', 'title', 'content',
+                  'created_at', 'updated_at', 'view',
                   'is_active', 'comments']
 
     def get_comments(self, obj):

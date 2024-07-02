@@ -4,14 +4,13 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.generics import (
     CreateAPIView,
     RetrieveUpdateDestroyAPIView,
-    ListCreateAPIView
+    ListAPIView
 )
 from rest_framework.permissions import IsAuthenticated
 
 from .models import Article, Comment
 from .serializers import ArticleSerializer, CommentSerializer
 from .permissions import IsOwnerOrReadOnly
-
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
@@ -50,10 +49,24 @@ class ArticleCreateView(CreateAPIView):
         serializer.save(user=self.request.user)
 
 
-class CommentListCreateView(ListCreateAPIView):
+class CommentListView(ListAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    pagination_class = StandardResultsSetPagination
+    permission_classes = [IsAuthenticated]
+
+
+class CommentDetailView(RetrieveUpdateDestroyAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+
+
+class ArticleCommentCreateView(CreateAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        article_id = self.kwargs.get('article_pk')
+        serializer.save(user=self.request.user, article_id=article_id)

@@ -3,12 +3,16 @@ from .views import (
     ArticleListView,
     ArticleDetailView,
     ArticleCreateView,
-    CommentListCreateView
+    CommentListView,
+    CommentDetailView,
+    ArticleCommentCreateView
 )
 
 urlpatterns = [
     path('articles/', ArticleListView.as_view(), name='article-list'),
     path('articles/<int:pk>/', ArticleDetailView.as_view(), name='article-detail'),
     path('articles/create/', ArticleCreateView.as_view(), name='article-create'),
-    path('comments/', CommentListCreateView.as_view(), name='comment-list-create'),
+    path('comments/', CommentListView.as_view(), name='comment-list'),
+    path('comments/<int:pk>/', CommentDetailView.as_view(), name='comment-detail'),
+    path('articles/<int:article_pk>/comments/', ArticleCommentCreateView.as_view(), name='article-comment-create'),
 ]
