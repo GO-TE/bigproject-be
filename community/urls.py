@@ -5,7 +5,8 @@ from .views import (
     ArticleCreateView,
     CommentListView,
     CommentDetailView,
-    ArticleCommentCreateView
+    ArticleCommentCreateView,
+    ArticleByCategoryListView  
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path('comments/', CommentListView.as_view(), name='comment-list'),
     path('comments/<int:pk>/', CommentDetailView.as_view(), name='comment-detail'),
     path('articles/<int:article_pk>/comments/', ArticleCommentCreateView.as_view(), name='article-comment-create'),
+    path('articles/category/<int:category_id>/', ArticleByCategoryListView.as_view(), name='article-by-category'), 
 ]

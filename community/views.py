@@ -83,3 +83,15 @@ class ArticleCommentCreateView(CreateAPIView):
     def perform_create(self, serializer):
         article_id = self.kwargs.get('article_pk')
         serializer.save(user=self.request.user, article_id=article_id)
+
+class ArticleByCategoryListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, category_id):
+        articles = Article.objects.filter(category_id=category_id).order_by('-created_at')
+        
+        if not articles.exists():
+            return Response({"articles": [], "message": "No articles found in this category."}, status=200)
+
+        serializer = ArticleSerializer(articles, many=True)
+        return Response(serializer.data)
