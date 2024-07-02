@@ -6,7 +6,7 @@ from rest_framework.generics import (
     RetrieveUpdateDestroyAPIView,
     ListAPIView
 )
-from rest_framework.permissions import IsAuthenticated,AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from .models import Article, Comment
 from .serializers import ArticleSerializer, CommentSerializer
@@ -22,7 +22,7 @@ class ArticleListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        articles = Article.objects.all().order_by('-created_at')
+        articles = Article.objects.select_related('user', 'category').prefetch_related('comment_set').order_by('-created_at')
         title = request.query_params.get('title', None)
         content = request.query_params.get('content', None)
         username = request.query_params.get('user', None)
@@ -40,9 +40,8 @@ class ArticleListView(APIView):
         serializer = ArticleSerializer(articles, many=True)
         return Response(serializer.data)
 
-
 class ArticleDetailView(RetrieveUpdateDestroyAPIView):
-    queryset = Article.objects.all()
+    queryset = Article.objects.select_related('user', 'category').prefetch_related('comment_set')
     serializer_class = ArticleSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
@@ -63,14 +62,14 @@ class ArticleCreateView(CreateAPIView):
 
 
 class CommentListView(ListAPIView):
-    queryset = Comment.objects.all()
+    queryset = Comment.objects.select_related('article', 'user')
     serializer_class = CommentSerializer
     pagination_class = StandardResultsSetPagination
     permission_classes = [AllowAny]
 
 
 class CommentDetailView(RetrieveUpdateDestroyAPIView):
-    queryset = Comment.objects.all()
+    queryset = Comment.objects.select_related('article', 'user')
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
@@ -88,7 +87,7 @@ class ArticleByCategoryListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, category_id):
-        articles = Article.objects.filter(category_id=category_id).order_by('-created_at')
+        articles = Article.objects.filter(category_id=category_id).select_related('user', 'category').prefetch_related('comment_set').order_by('-created_at')
         
         if not articles.exists():
             return Response({"articles": [], "message": "No articles found in this category."}, status=200)
