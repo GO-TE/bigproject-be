@@ -19,20 +19,22 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 
 class ArticleListView(APIView):
-    pagination_class = StandardResultsSetPagination
 
     def get(self, request):
         articles = Article.objects.all().order_by('-created_at')
-        paginate = request.query_params.get('page', None)
+        title = request.query_params.get('title', None)
+        content = request.query_params.get('content', None)
+        username = request.query_params.get('user', None)
 
-        if paginate:
-            paginator = self.pagination_class()
-            result_page = paginator.paginate_queryset(articles, request)
-            serializer = ArticleSerializer(result_page, many=True)
-            return paginator.get_paginated_response(serializer.data)
-        else:
-            serializer = ArticleSerializer(articles, many=True)
-            return Response(serializer.data)
+        if title:
+            articles = articles.filter(title__icontains=title)
+        if content:
+            articles = articles.filter(content__icontains=content)
+        if username:
+            articles = articles.filter(user__username__icontains=username)
+
+        serializer = ArticleSerializer(articles, many=True)
+        return Response(serializer.data)
 
 
 class ArticleDetailView(RetrieveUpdateDestroyAPIView):
