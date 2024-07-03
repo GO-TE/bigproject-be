@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Article, Comment
+from .models import Article, Comment, FAQ
 
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,3 +20,8 @@ class ArticleSerializer(serializers.ModelSerializer):
     def get_comments(self, obj):
         comments = obj.comment_set.all()
         return CommentSerializer(comments, many=True).data
+
+class FAQSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FAQ
+        fields = ['id', 'question', 'answer', 'category']

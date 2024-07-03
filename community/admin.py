@@ -1,6 +1,11 @@
 from django.contrib import admin
-from .models import Article, Comment, Category, Image
-
+from .models import (
+    Article,
+    Comment,
+    Category,
+    Image,
+    FAQ,
+)
 # Register your models here.
 
 class ArticleAdmin(admin.ModelAdmin):
@@ -21,7 +26,12 @@ class ImageAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'path', 'created_at')
     search_fields = ('path',)
 
+class FAQAdmin(admin.ModelAdmin):
+    list_display = ('id', 'question', 'answer', 'category')
+    search_fields = ('question', 'answer', 'category')
+    
 admin.site.register(Article, ArticleAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Image, ImageAdmin)
+admin.site.register(FAQ, FAQAdmin)

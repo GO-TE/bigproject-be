@@ -8,8 +8,12 @@ from rest_framework.generics import (
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from .models import Article, Comment
-from .serializers import ArticleSerializer, CommentSerializer
+from .models import Article, Comment, FAQ
+from .serializers import (
+    ArticleSerializer,
+    CommentSerializer,
+    FAQSerializer
+)
 from .permissions import IsOwnerOrReadOnly
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -94,3 +98,8 @@ class ArticleByCategoryListView(APIView):
 
         serializer = ArticleSerializer(articles, many=True)
         return Response(serializer.data)
+
+class FAQListView(ListAPIView):
+    queryset = FAQ.objects.all()
+    serializer_class = FAQSerializer
+    permission_classes = [AllowAny]

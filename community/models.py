@@ -47,3 +47,11 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.message
+
+class FAQ(models.Model):
+    question = models.TextField(null=True)
+    answer = models.TextField(null=True)
+    category = models.CharField(max_length=50, null=True)
+
+    def __str__(self):
+        return self.question
