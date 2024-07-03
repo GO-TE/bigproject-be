@@ -3,5 +3,6 @@ class Message:
     SUCCESS_LOGIN = "로그인 성공"
     SUCCESS_SIGNUP = "회원가입 성공"
     FAILED_SIGNUP = "회원가입 실패"
-
+    SUCCESS_LOGOUT = "로그아웃 성공"
+    FAILED_LOGOUT = "로그아웃 실패"
 

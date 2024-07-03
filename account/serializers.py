@@ -9,6 +9,7 @@ from django.core.validators import MinLengthValidator
 from rest_framework import serializers
 
 from account.models import User
+from account.util.message import Message
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -32,19 +33,20 @@ class UserSerializer(serializers.ModelSerializer):
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField()
 
     def validate(self, data):
         email = data.get('email')
         password = data.get('password')
 
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            raise serializers.ValidationError('유효하지 않은 인증')
+        if email and password:
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                raise serializers.ValidationError(Message.INVALID_LOGIN)
 
-        if not check_password(password, user.password):
-            raise serializers.ValidationError('유효하지 않은 인증')
+            if not check_password(password, user.password):
+                raise serializers.ValidationError(Message.INVALID_LOGIN)
 
         data['user'] = user
         return data

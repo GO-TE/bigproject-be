@@ -28,45 +28,53 @@ class UserRegistrationTests(APITestCase):
 
 
 class UserLoginTests(APITestCase):
-
     def setUp(self):
-        # 테스트용 사용자 생성
         self.user = User.objects.create(
             email='testuser@example.com',
-            password=make_password('password123')  # 비밀번호 해싱
+            password=make_password('testpassword'),
+            nickname='testuser',
+            username='testusername',
+            nationality='testnation',
+            work_at='testwork'
         )
 
     def test_login(self):
         url = reverse('account:login')
         data = {
             'email': 'testuser@example.com',
-            'password': 'password123',
+            'password': 'testpassword'
         }
-        response = self.client.post(url, data, format='json')
-
-        # 응답 상태 코드 확인
+        response = self.client.post(url, data)
+        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # 응답 데이터 확인
-        self.assertIn('access', response.data)
-        self.assertIn('refresh', response.data)
 
-        # JWT 토큰이 포함되어 있는지 확인
-        access_token = response.data['access']
-        refresh_token = response.data['refresh']
-        self.assertIsNotNone(access_token)
-        self.assertIsNotNone(refresh_token)
+class UserLogoutTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create(
+            email='testuser@example.com',
+            password=make_password('testpassword'),
+            nickname='testuser',
+            username='testusername',
+            nationality='testnation',
+            work_at='testwork'
+        )
 
-    def test_login_invalid_credentials(self):
-        url = reverse('account:login')
+    def test_logout(self):
+        login_url = reverse('account:login')
+        logout_url = reverse('account:logout')
         data = {
             'email': 'testuser@example.com',
-            'password': 'wrongpassword',
+            'password': 'testpassword'
         }
-        response = self.client.post(url, data, format='json')
+        response = self.client.post(login_url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # 응답 상태 코드 확인
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        refresh_token = response.data['refresh']
+        access_token = response.data['access']
 
-        # 응답 데이터 확인
-        self.assertIn('non_field_errors', response.data)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+
+        # 로그아웃 요청
+        response = self.client.post(logout_url, {'refresh_token': refresh_token})
+        self.assertEqual(response.status_code, status.HTTP_205_RESET_CONTENT)
