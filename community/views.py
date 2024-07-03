@@ -1,6 +1,5 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.generics import (
     CreateAPIView,
     RetrieveUpdateDestroyAPIView,
@@ -15,12 +14,6 @@ from .serializers import (
     FAQSerializer
 )
 from .permissions import IsOwnerOrReadOnly
-
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-    page_query_param = 'page'
-
 
 class ArticleListView(APIView):
     permission_classes = [AllowAny]
@@ -68,7 +61,6 @@ class ArticleCreateView(CreateAPIView):
 class CommentListView(ListAPIView):
     queryset = Comment.objects.select_related('article', 'user')
     serializer_class = CommentSerializer
-    pagination_class = StandardResultsSetPagination
     permission_classes = [AllowAny]
 
 
@@ -103,3 +95,11 @@ class FAQListView(ListAPIView):
     queryset = FAQ.objects.all()
     serializer_class = FAQSerializer
     permission_classes = [AllowAny]
+    
+class FAQByCategoryListView(ListAPIView):
+    serializer_class = FAQSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        category = self.kwargs['category']
+        return FAQ.objects.filter(category=category)
