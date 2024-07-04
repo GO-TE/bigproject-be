@@ -19,6 +19,7 @@ pip install Django==5.0.6
 pip install djangorestframwork
 pip install django-redis
 pip install mysqlclient
+pip install djangorestframework-simplejwt
 ```
 
 ---
