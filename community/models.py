@@ -1,10 +1,6 @@
 from django.db import models
 from django.conf import settings
 
-class User(models.Model):
-    # User 모델은 이미 프로젝트에 존재한다고 가정합니다.
-    pass
-
 class Category(models.Model):
     major = models.CharField(max_length=30, null=True)
     sub = models.CharField(max_length=30, null=True)

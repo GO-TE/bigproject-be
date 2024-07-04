@@ -45,6 +45,8 @@ class User(AbstractBaseUser):
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
 
+    objects = UserManager() #추가 부분
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'nickname', 'nationality', 'work_at']
 
