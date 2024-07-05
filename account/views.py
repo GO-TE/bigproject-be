@@ -1,8 +1,9 @@
-from django.contrib.auth import authenticate
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import (
+    status,
+    generics
+)
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import (
     IsAuthenticated,
@@ -10,13 +11,15 @@ from rest_framework.permissions import (
 )
 from rest_framework.decorators import permission_classes
 
-
 from account.models import User
 from account.serializers import (
     UserSerializer,
     LoginSerializer,
+    ProfileSerializer,
 )
 from account.util.message import Message
+from account.util.utils import decode_jwt
+
 
 @permission_classes([AllowAny])
 class CheckEmailDuplicateView(APIView):
@@ -104,3 +107,16 @@ class LogoutView(APIView):
         except Exception as e:
             return Response({'message': Message.FAILED_LOGOUT, 'error': str(e)},
                             status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProfileRetrieveView(generics.RetrieveAPIView):
+    serializer_class = ProfileSerializer
+
+    def get_object(self):
+        return self.request.user
+
+
+class UserProfileUpdateView(generics.UpdateAPIView):
+    serializer_class = ProfileSerializer
+    def get_object(self):
+        return self.request.user
