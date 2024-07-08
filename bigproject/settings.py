@@ -87,7 +87,12 @@ WSGI_APPLICATION = "bigproject.wsgi.application"
 
 DATABASES = {
     "default": {
-        keys['DATABASE']
+        "ENGINE": keys['DATABASE']["ENGINE"],
+        "NAME": keys['DATABASE']["NAME"],
+        "USER": keys['DATABASE']["USER"],
+        "PASSWORD": keys['DATABASE']["PASSWORD"],
+        "HOST": keys['DATABASE']["HOST"],
+        "PORT": keys['DATABASE']["PORT"],
     }
 }
 

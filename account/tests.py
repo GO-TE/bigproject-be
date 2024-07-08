@@ -1,14 +1,14 @@
-import jwt
-
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.hashers import make_password
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
 
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 
 from account.models import User
-from bigproject.settings import SECRET_KEY
 
 
 class UserRegistrationTests(APITestCase):
@@ -38,7 +38,8 @@ class UserLoginTests(APITestCase):
             nickname='testuser',
             username='testusername',
             nationality='testnation',
-            work_at='testwork'
+            work_at='testwork',
+            is_active=True
         )
 
     def test_login(self):
@@ -59,7 +60,8 @@ class UserLogoutTests(APITestCase):
             nickname='testuser',
             username='testusername',
             nationality='testnation',
-            work_at='testwork'
+            work_at='testwork',
+            is_active=True
         )
 
     def test_logout(self):
@@ -91,7 +93,8 @@ class UserProfileTests(APITestCase):
             nickname='testuser',
             username='testusername',
             nationality='testnation',
-            work_at='testwork'
+            work_at='testwork',
+            is_active=True
         )
         self.client = APIClient()
         self.url_retrieve = reverse('account:profile')
@@ -125,3 +128,53 @@ class UserProfileTests(APITestCase):
         self.user.refresh_from_db()
         self.assertEqual(self.user.username, 'UpdatedName')
         self.assertEqual(self.user.work_at, 'JAPAN')
+
+
+class PasswordResetTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create(
+            email='testuser@example.com',
+            password=make_password('testpassword'),
+            nickname='testuser',
+            username='testusername',
+            nationality='testnation',
+            work_at='testwork',
+            is_active=True
+        )
+        self.url = reverse('account:password_reset')
+
+    def test_password_reset_reqeust(self):
+        data = {
+            "email": "testuser@example.com",
+        }
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, 200)
+
+    def test_password_reset_request_invalid_email(self):
+        response = self.client.post(self.url, {'email': 'invalid@example.com'}, format='json')
+        self.assertEqual(response.status_code, 400)
+
+    def test_password_reset_confirm(self):
+        token = default_token_generator.make_token(self.user)
+        uid = urlsafe_base64_encode(force_bytes(self.user.uuid))
+        new_password = 'new_password123'
+        response = self.client.post(reverse('account:password_reset_confirm', kwargs={'uidb64': uid, 'token': token}),
+                                    {'new_password': new_password})
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(new_password))
+
+
+class VerifyEmailTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create(
+            email='testuser@example.com',
+            password=make_password('testpassword'),
+            nickname='testuser',
+            username='testusername',
+            nationality='testnation',
+            work_at='testwork',
+            is_active=False
+        )

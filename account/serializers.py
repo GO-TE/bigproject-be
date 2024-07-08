@@ -27,6 +27,7 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['uuid'] = str(uuid.uuid4())
         validated_data['password'] = make_password(validated_data['password'])
+        validated_data['is_active'] = False
         user = User.objects.create(**validated_data)
         return user
 
@@ -48,10 +49,14 @@ class LoginSerializer(serializers.Serializer):
             if not check_password(password, user.password):
                 raise serializers.ValidationError(Message.INVALID_LOGIN)
 
+            if user.is_active is False:
+                raise serializers.ValidationError("이메일 인증 미진행 계정")  # TODO: 하드 코딩 제거
+
         data['user'] = user
         return data
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['nationality', 'work_at', 'username','nickname', 'email']
+        fields = ['nationality', 'work_at', 'username', 'nickname', 'email']
