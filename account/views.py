@@ -35,10 +35,24 @@ from bigproject.settings import EMAIL_HOST_USER
 
 
 @permission_classes([AllowAny])
+class CheckEmailDuplicateView(APIView):
+    def post(self, request):
+        email = request.data.get('email', None)
+        if email is not None:
+            exists = User.objects.filter(email=email).exists()
+            return Response({'exists': exists})
+        return Response({"message": "Data is None"}, status=400)
+
+
+@permission_classes([AllowAny])
 class CheckNicknameDuplicateView(APIView):
-    def post(self, request, nickname):
-        exists = User.objects.filter(nickname=nickname).exists()
-        return Response({'exists': exists}, status=200)
+    def post(self, request):
+        nickname = request.data.get('nickname', None)
+        if nickname is not None:
+            exists = User.objects.filter(nickname=nickname).exists()
+            return Response({'exists': exists}, status=200)
+
+        return Response({"message": "Data is None"}, status=400)
 
 
 @permission_classes([AllowAny])
@@ -132,9 +146,13 @@ class UserProfileUpdateView(generics.UpdateAPIView):
 class PasswordResetView(APIView):  # TODO: 하드코딩 제거
     def post(self, request):
         email = request.data.get('email', None)
-        user = User.objects.filter(email=email).first()
+        if email is None:
+            return Response({"message": "이메일 공란"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if user:
+
+
+        try:
+            user = User.objects.get(email=email)
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.uuid))
             reset_link = request.build_absolute_uri(f'/account/password-reset-confirm/{uid}/{token}/')
@@ -150,7 +168,7 @@ class PasswordResetView(APIView):  # TODO: 하드코딩 제거
             return Response({'message': 'Password reset link has been sent to your email.'},
                             status=status.HTTP_200_OK)
 
-        else:
+        except User.DoesNotExist:
             return Response(
                 {"message": "이메일이 일치하지 않습니다."},
                 status=status.HTTP_400_BAD_REQUEST
@@ -173,19 +191,19 @@ class PasswordResetConfirmView(APIView):  # TODO: 하드코딩 제거, login하�
 
 
 @permission_classes([AllowAny])
-class VerifyUserEmailView(APIView): # TODO: 하드코딩 제거, 마찬가지로 로그인하는 url로 이동...
+class VerifyUserEmailView(APIView):  # TODO: 하드코딩 제거, 마찬가지로 로그인하는 url로 이동...
     def post(self, request):
-        email = request.get.data("email", None)
-        if email is not None:
-            if is_duplicated_email(email):
-                return Response({"message": "duplicated email"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+        email = request.data.get("email", None)
+        if email is None:
+            return Response({"message": "이메일 공란"}, status=status.HTTP_400_BAD_REQUEST)
 
-            user = User.objects.filter(email=email)
+        try:
+            user = User.objects.get(email=email)
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.uuid))
-            link = request.build_absolute_uri(f'/account/verify-email/{uid}/{token}/')
-            send_mail(
-                '[GLAWBAL] Activate your account'
+            link = request.build_absolute_uri(f'/account/activate/{uid}/{token}/')  # 프론트에서 비밀번호 초기화 화면으로 바꿔야할듯
+            send_mail(  # 이메일 발송 따로 나누면 좋을 듯
+                '[GLAWBAL] Activate your account',
                 f'Hi {user.nickname},\n'
                 '\nPlease click the link to activate your account\n'
                 f'link: {link}\n Thank you',
@@ -194,14 +212,32 @@ class VerifyUserEmailView(APIView): # TODO: 하드코딩 제거, 마찬가지로
                 fail_silently=False
             )
             return Response(
-                {"message": "Success send email"},
+                {"message": " Send email successfully"},
                 status=status.HTTP_200_OK
             )
-        return Response(
-            {"message": "Invalid access"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+
+        except User.DoesNotExist:
+            return Response(
+                {"message": "Invalid access"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
-def is_duplicated_email(email):
-    return User.objects.filter(email=email).exists()
+@permission_classes([AllowAny])
+class ActivateUserAccountView(APIView):  # TODO: 프론트 로그인 화면으로 리다이렉트
+    def get(self, request, uidb64, token):
+        if not (uidb64 and token):
+            return Response({'error': 'Missing required parameters'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(uuid=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user is not None and default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            return Response({'message': 'Account activated successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Invalid token or user'}, status=status.HTTP_400_BAD_REQUEST)

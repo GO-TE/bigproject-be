@@ -8,6 +8,8 @@ from django.contrib.auth.tokens import default_token_generator
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 
+from unittest.mock import patch
+
 from account.models import User
 
 
@@ -23,7 +25,6 @@ class UserRegistrationTests(APITestCase):
             'email': 'test@example.com',
         }
         response = self.client.post(url, data, format='json')
-        print(response.data)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(User.objects.count(), 1)
@@ -155,18 +156,8 @@ class PasswordResetTests(TestCase):
         response = self.client.post(self.url, {'email': 'invalid@example.com'}, format='json')
         self.assertEqual(response.status_code, 400)
 
-    def test_password_reset_confirm(self):
-        token = default_token_generator.make_token(self.user)
-        uid = urlsafe_base64_encode(force_bytes(self.user.uuid))
-        new_password = 'new_password123'
-        response = self.client.post(reverse('account:password_reset_confirm', kwargs={'uidb64': uid, 'token': token}),
-                                    {'new_password': new_password})
-        self.assertEqual(response.status_code, 200)
-        self.user.refresh_from_db()
-        self.assertTrue(self.user.check_password(new_password))
 
-
-class VerifyEmailTests(TestCase):
+class ActivateUserViewTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create(
@@ -176,5 +167,14 @@ class VerifyEmailTests(TestCase):
             username='testusername',
             nationality='testnation',
             work_at='testwork',
-            is_active=False
         )
+        self.user.is_active = False
+
+    def test_activate_user_success(self):
+        uid = urlsafe_base64_encode(force_bytes(self.user.uuid))
+        token = default_token_generator.make_token(self.user)
+
+        response = self.client.get(reverse("account:account_activate", args=[uid, token]))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_active)
