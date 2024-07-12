@@ -6,6 +6,7 @@ class User(models.Model):
     pass
 
 class Category(models.Model):
+    category_id = models.AutoField(primary_key=True)
     major = models.CharField(max_length=30, null=True)
     sub = models.CharField(max_length=30, null=True)
 
@@ -48,10 +49,3 @@ class Comment(models.Model):
     def __str__(self):
         return self.message
 
-class FAQ(models.Model):
-    question = models.TextField(null=True)
-    answer = models.TextField(null=True)
-    category = models.CharField(max_length=50, null=True)
-
-    def __str__(self):
-        return self.question

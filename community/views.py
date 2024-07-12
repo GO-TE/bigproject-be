@@ -7,11 +7,10 @@ from rest_framework.generics import (
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from .models import Article, Comment, FAQ
+from .models import Article, Comment
 from .serializers import (
     ArticleSerializer,
     CommentSerializer,
-    FAQSerializer
 )
 from .permissions import IsOwnerOrReadOnly
 
@@ -77,7 +76,9 @@ class ArticleCommentCreateView(CreateAPIView):
 
     def perform_create(self, serializer):
         article_id = self.kwargs.get('article_pk')
-        serializer.save(user=self.request.user, article_id=article_id)
+        article = Article.objects.get(pk=article_id)
+        serializer.save(user=self.request.user, article=article)
+
 
 class ArticleByCategoryListView(APIView):
     permission_classes = [AllowAny]
@@ -90,16 +91,3 @@ class ArticleByCategoryListView(APIView):
 
         serializer = ArticleSerializer(articles, many=True)
         return Response(serializer.data)
-
-class FAQListView(ListAPIView):
-    queryset = FAQ.objects.all()
-    serializer_class = FAQSerializer
-    permission_classes = [AllowAny]
-    
-class FAQByCategoryListView(ListAPIView):
-    serializer_class = FAQSerializer
-    permission_classes = [AllowAny]
-
-    def get_queryset(self):
-        category = self.kwargs['category']
-        return FAQ.objects.filter(category=category)
