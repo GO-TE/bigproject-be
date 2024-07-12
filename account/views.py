@@ -1,5 +1,6 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.urls import reverse
 from django.utils.http import (
     urlsafe_base64_encode,
     urlsafe_base64_decode,
@@ -30,7 +31,7 @@ from account.serializers import (
     ProfileSerializer,
 )
 from account.util.message import Message
-from account.util.utils import decode_jwt
+from account.util.utils import validate_google_token
 from bigproject.settings import EMAIL_HOST_USER
 
 
@@ -149,8 +150,6 @@ class PasswordResetView(APIView):  # TODO: 하드코딩 제거
         if email is None:
             return Response({"message": "이메일 공란"}, status=status.HTTP_400_BAD_REQUEST)
 
-
-
         try:
             user = User.objects.get(email=email)
             token = default_token_generator.make_token(user)
@@ -241,3 +240,39 @@ class ActivateUserAccountView(APIView):  # TODO: 프론트 로그인 화면으�
             return Response({'message': 'Account activated successfully'}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid token or user'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@permission_classes([AllowAny])
+class GoogleLogin(APIView):
+    def post(self, request):
+        token = request.data.get('token', None)
+        if token is None:
+            return Response({'message': 'No token provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        id_info = validate_google_token(token)
+        if id_info is None:
+            return Response({'message': 'Invalid Token'}, status=status.HTTP_400_BAD_REQUEST)
+
+        email = id_info['email']
+        try:
+            user = User.objects.get(email=email)
+
+        except User.DoesNotExist:
+            return Response({'message': '회원가입 미진행 계정'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if user:
+            refresh = RefreshToken.for_user(user)
+            access_token = refresh.access_token
+
+            response = Response({
+                'message': Message.SUCCESS_LOGIN,
+                'access': str(access_token),
+                'refresh': str(refresh)
+            }, status=status.HTTP_200_OK)
+
+            return response
+
+        else:
+            return Response({'message': 'user is None'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # TODO : dj-rest-auth 보고 최대한 그래도 library 사용해서 kakao까지 늘려보기...

@@ -15,7 +15,8 @@ from account.views import (
     PasswordResetView,
     PasswordResetConfirmView,
     VerifyUserEmailView,
-    ActivateUserAccountView
+    ActivateUserAccountView,
+    GoogleLogin
 )
 
 app_name = "account"
@@ -32,4 +33,5 @@ urlpatterns = [
     path('activate/<uidb64>/<token>/', ActivateUserAccountView.as_view(), name='account_activate'),
     path('check-email/', CheckEmailDuplicateView.as_view(), name='check-email-duplicate'),
     path('check-nickname/', CheckNicknameDuplicateView.as_view(), name='check_nickname_duplicate'),
+    path('google/login/', GoogleLogin.as_view(), name='google-login')
 ]
