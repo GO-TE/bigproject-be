@@ -1,3 +1,4 @@
 # local file
 .idea
 .DS_Store
+secrets.json

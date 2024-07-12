@@ -10,7 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+import json
+
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -18,8 +21,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-15opn9&hl23&y9j6r7s=!%ok#&ejqh0y16%6osyvcdzdf*g@9^"
+# SECURITY WARNING: keep the secrets.json key used in production secrets.json!
+with open('secrets.json') as f:
+    keys = json.load(f)
+
+SECRET_KEY = keys['key']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -35,6 +41,14 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
+    # library
+    "rest_framework",
+    "rest_framework_simplejwt",
+    'rest_framework_simplejwt.token_blacklist',
+
+    # application
+    "account",
 ]
 
 MIDDLEWARE = [
@@ -73,12 +87,12 @@ WSGI_APPLICATION = "bigproject.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "mysql.connector.django",
-        "NAME": 'aivle',
-        'USER': 'root',
-        'PASSWORD': 'root',
-        'HOST': 'localhost',
-        'POST': '3306',
+        "ENGINE": keys['DATABASE']["ENGINE"],
+        "NAME": keys['DATABASE']["NAME"],
+        "USER": keys['DATABASE']["USER"],
+        "PASSWORD": keys['DATABASE']["PASSWORD"],
+        "HOST": keys['DATABASE']["HOST"],
+        "PORT": keys['DATABASE']["PORT"],
     }
 }
 
@@ -121,6 +135,7 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
 # Cache (Redis)
 
 CACHES = {
@@ -132,3 +147,43 @@ CACHES = {
         }
     }
 }
+
+# rest framework setting
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+
+# jwt setting
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # 액세스 토큰의 유효 기간
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # 리프레시 토큰의 유효 기간
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+AUTH_USER_MODEL = 'account.User'
+
+# email
+AUTHENTICATION_BACKENDS = {
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+}
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.naver.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = keys['email']
+EMAIL_HOST_PASSWORD = keys['email-password']
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
