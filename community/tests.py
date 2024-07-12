@@ -7,10 +7,15 @@ from community.models import Article, Comment, Category, Image
 
 User = get_user_model()
 
+
 class CommunityTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.user = User.objects.create_user(
+            email='test@test.com',
+            username='testuser',
+            password='testpass'
+        )
         self.category = Category.objects.create(major='Tech', sub='Programming')
         self.image = Image.objects.create(path='path/to/image.jpg')
         self.article = Article.objects.create(
@@ -25,7 +30,6 @@ class CommunityTests(APITestCase):
             user=self.user,
             message='This is a test comment.'
         )
-        self.client.login(username='testuser', password='testpass')
 
     def test_article_list_view(self):
         url = reverse('article-list')
@@ -66,6 +70,7 @@ class CommunityTests(APITestCase):
     def test_article_comment_create_view(self):
         url = reverse('article-comment-create', args=[self.article.id])
         data = {
+            'article': self.article.id,
             'message': 'A new comment'
         }
         response = self.client.post(url, data, format='json')
@@ -77,7 +82,3 @@ class CommunityTests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
-
-if __name__ == '__main__':
-    import unittest
-    unittest.main()

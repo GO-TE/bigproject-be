@@ -14,11 +14,13 @@ from .serializers import (
 )
 from .permissions import IsOwnerOrReadOnly
 
+
 class ArticleListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        articles = Article.objects.select_related('user', 'category').prefetch_related('comment_set').order_by('-created_at')
+        articles = Article.objects.select_related('user', 'category').prefetch_related('comment_set').order_by(
+            '-created_at')
         title = request.query_params.get('title', None)
         content = request.query_params.get('content', None)
         username = request.query_params.get('user', None)
@@ -32,9 +34,10 @@ class ArticleListView(APIView):
 
         if not articles.exists():
             return Response({"articles": [], "message": "No articles found matching your query."}, status=200)
- 
+
         serializer = ArticleSerializer(articles, many=True)
         return Response(serializer.data)
+
 
 class ArticleDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Article.objects.select_related('user', 'category').prefetch_related('comment_set')
@@ -84,8 +87,9 @@ class ArticleByCategoryListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, category_id):
-        articles = Article.objects.filter(category_id=category_id).select_related('user', 'category').prefetch_related('comment_set').order_by('-created_at')
-        
+        articles = Article.objects.filter(category_id=category_id).select_related('user', 'category').prefetch_related(
+            'comment_set').order_by('-created_at')
+
         if not articles.exists():
             return Response({"articles": [], "message": "No articles found in this category."}, status=200)
 

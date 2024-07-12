@@ -1,0 +1,11 @@
+openai
+langchain
+django
+djangorestframework
+chromadb
+langchain_community
+langchain-openai
+requests
+deep-translator
+pytest
+

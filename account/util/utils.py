@@ -6,8 +6,8 @@ from google.oauth2 import id_token
 
 from bigproject.settings import keys
 
-GOOGLE_CLIENT_ID = keys['google-client-id']
-GOOGLE_CLIENT_PASSWORD = keys['google-client-password']
+GOOGLE_CLIENT_ID = keys['google']['id']
+GOOGLE_CLIENT_PASSWORD = keys['google']['password']
 
 
 def decode_jwt(token):
