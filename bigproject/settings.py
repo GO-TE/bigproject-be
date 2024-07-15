@@ -30,7 +30,7 @@ SECRET_KEY = keys['key']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     # library
     "rest_framework",
     "rest_framework_simplejwt",
-    'rest_framework_simplejwt.token_blacklist',
+    "rest_framework_simplejwt.token_blacklist",
+    "corsheaders",
 
     # application
     "account",
@@ -62,6 +63,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
+    'corsheaders.middleware.CorsMiddleware',
+
 ]
 
 ROOT_URLCONF = "bigproject.urls"
@@ -138,7 +142,6 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
 # Cache (Redis)
 
 CACHES = {
@@ -190,3 +193,12 @@ EMAIL_HOST_PASSWORD = keys['password']
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+CORS_ORIGIN_ALLOW_ALL = False
+
+# 접근 가능한 url 을 따로 관리
+CORS_ORIGIN_WHITELIST = (
+    "http://localhost:3000",
+    "34.22.69.185",
+    "34.22.69.185:3000"
+
+)

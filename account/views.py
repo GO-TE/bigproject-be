@@ -41,8 +41,8 @@ class CheckEmailDuplicateView(APIView):
         email = request.data.get('email', None)
         if email is not None:
             exists = User.objects.filter(email=email).exists()
-            return Response({'exists': exists})
-        return Response({"message": "Data is None"}, status=400)
+            return Response({'exists': exists}, status=status.HTTP_200_OK)
+        return Response({"message": "Data is None"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @permission_classes([AllowAny])
@@ -51,9 +51,9 @@ class CheckNicknameDuplicateView(APIView):
         nickname = request.data.get('nickname', None)
         if nickname is not None:
             exists = User.objects.filter(nickname=nickname).exists()
-            return Response({'exists': exists}, status=200)
+            return Response({'exists': exists}, status.HTTP_200_OK)
 
-        return Response({"message": "Data is None"}, status=400)
+        return Response({"message": "Data is None"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @permission_classes([AllowAny])

@@ -42,15 +42,24 @@ class UserLoginTests(APITestCase):
             work_at='testwork',
             is_active=True
         )
+        self.url = reverse('account:login')
 
     def test_login(self):
-        url = reverse('account:login')
         data = {
             'email': 'testuser@example.com',
             'password': 'testpassword'
         }
-        response = self.client.post(url, data)
+        response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_invalid_login(self):
+        data = {
+            'email': 'wrongemail@email.com',
+            'password': 'blahblah'
+        }
+        response = self.client.post(self.url, data)
+        print(response)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 class UserLogoutTests(APITestCase):
