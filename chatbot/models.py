@@ -6,7 +6,7 @@ class ChatSession(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
-    summary = models.CharField(max_length=255, blank=True, null=True)
+    summary = models.CharField(max_length=30, blank=True, null=True)
     
 class ChatMessage(models.Model):
     session = models.ForeignKey(ChatSession, on_delete=models.CASCADE)

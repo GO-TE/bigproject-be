@@ -115,8 +115,8 @@ class OpenAIChatView(APIView):
         else:
             raise Exception(f"Error in translation: {response.status_code}, {response.text}")
 
-# 전체 채팅 세션 나열 및 생성
-class ChatSessionListView(generics.ListCreateAPIView):
+# 전체 채팅 세션 나열
+class ChatSessionListView(generics.ListAPIView):
     queryset = ChatSession.objects.all()
     serializer_class = ChatSessionSerializer
     permission_classes = [IsAuthenticated]
