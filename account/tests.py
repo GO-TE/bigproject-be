@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.hashers import make_password
@@ -8,9 +10,10 @@ from django.contrib.auth.tokens import default_token_generator
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 
-from unittest.mock import patch
-
 from account.models import User
+
+from rest_framework_simplejwt.tokens import AccessToken
+
 
 
 class UserRegistrationTests(APITestCase):
@@ -58,7 +61,6 @@ class UserLoginTests(APITestCase):
             'password': 'blahblah'
         }
         response = self.client.post(self.url, data)
-        print(response)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
@@ -133,7 +135,6 @@ class UserProfileTests(APITestCase):
             'work_at': 'JAPAN'
         }
         response = self.client.patch(self.url_update, data, format='json')
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
         self.assertEqual(self.user.username, 'UpdatedName')
@@ -187,3 +188,39 @@ class ActivateUserViewTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
         self.assertTrue(self.user.is_active)
+
+
+class RefreshTokenMiddlewareTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(
+            email='test@test.com',
+            password=make_password('testpassword'),
+            username='testuser',
+            work_at='test',
+            nationality='test',
+            is_active=True,
+            nickname='test',
+
+        )
+        self.client = APIClient()
+        self.login_url = reverse('account:login')
+        self.refresh_url = reverse('account:token_refresh')
+
+    def test_access_token_refresh(self):
+        data = {
+            'email': 'test@test.com',
+            'password': 'testpassword'
+        }
+        response = self.client.post(self.login_url, data)
+
+        self.assertEqual(response.status_code, 200)
+        access_token = response.data['access']
+        refresh_token = response.data['refresh']
+
+        # Simulate access token expiration by directly decoding it
+        expired_access_token = AccessToken(access_token)
+        expired_access_token.set_exp(lifetime=timedelta(minutes=-1))  # Set expiration in the past
+
+        # Set expired access token in Authorization header
+        self.client.defaults['HTTP_AUTHORIZATION'] = f'Bearer {str(expired_access_token)}'
+        self.client.cookies['refresh'] = refresh_token

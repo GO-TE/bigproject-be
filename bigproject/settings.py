@@ -65,6 +65,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 
     'corsheaders.middleware.CorsMiddleware',
+    'account.middleware.RefreshTokenMiddleware',
 
 ]
 
@@ -167,7 +168,7 @@ REST_FRAMEWORK = {
 # jwt setting
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # 액세스 토큰의 유효 기간
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # 액세스 토큰의 유효 기간
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # 리프레시 토큰의 유효 기간
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
