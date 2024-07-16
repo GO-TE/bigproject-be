@@ -31,10 +31,10 @@ embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
 class OpenAIChatView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        session_id = request.GET.get('session_id')
-        query = request.GET.get('query')
-        nation = request.GET.get('nation')
+    def post(self, request):
+        session_id = request.data.get('session_id')
+        query = request.data.get('query')
+        nation = request.data.get('nation')
 
         if not session_id:
             return Response({'error': 'Session ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -76,29 +76,22 @@ class OpenAIChatView(APIView):
         # 입력 메시지 번역 (얻은 답변을 처음 질문받았을 때의 언어로 번역)
         translated_query, detected_language = self.translate_text(query, target_language)
 
-        # SSE 스트림 생성기
-        def generate_response():
-            result = conversation.predict(input=translated_query)
-            translated_result, _ = self.translate_text(result, detected_language)
-            
-            # 새 메시지 저장
-            new_message = ChatMessage(session=session, message=query, sender=1)  # 1 for user
-            new_message.save()
+        result = conversation.predict(input=translated_query)
+        translated_result, _ = self.translate_text(result, detected_language)
+        
+        # 새 메시지 저장
+        new_message = ChatMessage(session=session, message=query, sender=1)  # 1 for user
+        new_message.save()
 
-            bot_response = ChatMessage(session=session, message=translated_result, sender=0)  # 0 for AI
-            bot_response.save()
+        bot_response = ChatMessage(session=session, message=translated_result, sender=0)  # 0 for AI
+        bot_response.save()
 
-            # 세션 요약 업데이트 (첫 번째 메시지를 요약으로 사용, 12글자 초과 시 ...로 대체)
-            first_message = previous_messages.first().message if previous_messages.exists() else query
-            session.summary = first_message if len(first_message) <= 12 else first_message[:9] + '...'
-            session.save()
+        # 세션 요약 업데이트 (첫 번째 메시지를 요약으로 사용, 12글자 초과 시 ...로 대체)
+        first_message = previous_messages.first().message if previous_messages.exists() else query
+        session.summary = first_message if len(first_message) <= 12 else first_message[:9] + '...'
+        session.save()
 
-            for char in translated_result:
-                yield f"data: {char}\n\n"
-                time.sleep(0.1)  # 한 글자씩 보내는 간격 조정
-
-        response = StreamingHttpResponse(generate_response(), content_type='text/event-stream')
-        return response
+        return Response({"response": translated_result}, status=status.HTTP_200_OK)
 
     def translate_text(self, text, target_language):
         url = f"https://translation.googleapis.com/language/translate/v2?key={translation_api_key}"
