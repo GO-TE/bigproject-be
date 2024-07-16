@@ -4,6 +4,8 @@ from django.urls import(
     include
 )
 
+from rest_framework_simplejwt.views import TokenRefreshView
+
 from account.views import (
     SignUpAPIView,
     CheckNicknameDuplicateView,
@@ -33,5 +35,6 @@ urlpatterns = [
     path('activate/<uidb64>/<token>/', ActivateUserAccountView.as_view(), name='account_activate'),
     path('check-email/', CheckEmailDuplicateView.as_view(), name='check-email-duplicate'),
     path('check-nickname/', CheckNicknameDuplicateView.as_view(), name='check_nickname_duplicate'),
-    path('google/login/', GoogleLogin.as_view(), name='google-login')
+    path('google/login/', GoogleLogin.as_view(), name='google-login'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
