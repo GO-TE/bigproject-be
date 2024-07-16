@@ -8,4 +8,5 @@ langchain-openai
 requests
 deep-translator
 pytest
-
+Pillow
+opencv-python-headless
