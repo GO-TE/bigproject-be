@@ -10,3 +10,4 @@ deep-translator
 pytest
 Pillow
 opencv-python-headless
+django-cors-header
