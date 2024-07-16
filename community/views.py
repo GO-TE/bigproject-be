@@ -6,11 +6,13 @@ from rest_framework.generics import (
     ListAPIView
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.exceptions import NotFound, PermissionDenied
 
-from .models import Article, Comment
+from .models import Article, Comment, Category
 from .serializers import (
     ArticleSerializer,
     CommentSerializer,
+    ArticleListSerializer,
 )
 from .permissions import IsOwnerOrReadOnly
 
@@ -19,24 +21,27 @@ class ArticleListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        articles = Article.objects.select_related('user', 'category').prefetch_related('comment_set').order_by(
-            '-created_at')
-        title = request.query_params.get('title', None)
-        content = request.query_params.get('content', None)
-        username = request.query_params.get('user', None)
+        try:
+            articles = Article.objects.select_related('user', 'category').order_by('-created_at')
+            title = request.query_params.get('title', None)
+            content = request.query_params.get('content', None)
+            username = request.query_params.get('user', None)
 
-        if title:
-            articles = articles.filter(title__icontains=title)
-        if content:
-            articles = articles.filter(content__icontains=content)
-        if username:
-            articles = articles.filter(user__username__icontains=username)
+            if title:
+                articles = articles.filter(title__icontains=title)
+            if content:
+                articles = articles.filter(content__icontains=content)
+            if username:
+                articles = articles.filter(user__username__icontains=username)
 
-        if not articles.exists():
-            return Response({"articles": [], "message": "No articles found matching your query."}, status=200)
+            if not articles.exists():
+                return Response({"articles": [], "message": "No articles found matching your query."}, status=200)
 
-        serializer = ArticleSerializer(articles, many=True)
-        return Response(serializer.data)
+            serializer = ArticleListSerializer(articles, many=True)
+            return Response(serializer.data)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
 
 
 class ArticleDetailView(RetrieveUpdateDestroyAPIView):
@@ -45,10 +50,15 @@ class ArticleDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
     def retrieve(self, request, *args, **kwargs):
-        article = self.get_object()
-        article.increment_view_count()
-        serializer = self.get_serializer(article)
-        return Response(serializer.data)
+        try:
+            article = self.get_object()
+            article.increment_view_count()
+            serializer = self.get_serializer(article)
+            return Response(serializer.data)
+        except Article.DoesNotExist:
+            raise NotFound("Article not found")
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
 
 
 class ArticleCreateView(CreateAPIView):
@@ -57,7 +67,10 @@ class ArticleCreateView(CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        try:
+            serializer.save(user=self.request.user)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
 
 
 class CommentListView(ListAPIView):
@@ -71,6 +84,15 @@ class CommentDetailView(RetrieveUpdateDestroyAPIView):
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
+    def get_object(self):
+        try:
+            comment = super().get_object()
+            return comment
+        except Comment.DoesNotExist:
+            raise NotFound("Comment not found")
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
 
 class ArticleCommentCreateView(CreateAPIView):
     queryset = Comment.objects.all()
@@ -78,20 +100,30 @@ class ArticleCommentCreateView(CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        article_id = self.kwargs.get('article_pk')
-        article = Article.objects.get(pk=article_id)
-        serializer.save(user=self.request.user, article=article)
+        try:
+            article_id = self.kwargs.get('article_pk')
+            article = Article.objects.get(pk=article_id)
+            serializer.save(user=self.request.user, article=article)
+        except Article.DoesNotExist:
+            raise NotFound("Article not found")
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
 
 
 class ArticleByCategoryListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, category_id):
-        articles = Article.objects.filter(category_id=category_id).select_related('user', 'category').prefetch_related(
-            'comment_set').order_by('-created_at')
+        try:
+            category = Category.objects.get(id=category_id)
+            articles = Article.objects.filter(category=category).select_related('user', 'category').order_by('-created_at')
 
-        if not articles.exists():
-            return Response({"articles": [], "message": "No articles found in this category."}, status=200)
+            if not articles.exists():
+                return Response({"articles": [], "message": "No articles found in this category."}, status=200)
 
-        serializer = ArticleSerializer(articles, many=True)
-        return Response(serializer.data)
+            serializer = ArticleSerializer(articles, many=True)
+            return Response(serializer.data)
+        except Category.DoesNotExist:
+            raise NotFound("Category not found")
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)

@@ -1,21 +1,36 @@
+import json
 from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
 
 from community.models import Article, Comment, Category, Image
 
 User = get_user_model()
 
-
 class CommunityTests(APITestCase):
     def setUp(self):
-        self.client = APIClient()
-        self.user = User.objects.create_user(
-            email='test@test.com',
-            username='testuser',
-            password='testpass'
+        self.user = User.objects.create(
+            email='testuser@example.com',
+            password=make_password('testpassword'),
+            nickname='testuser',
+            username='testusername',
+            nationality='testnation',
+            work_at='testwork',
+            is_active=True
         )
+        self.client = APIClient()
+        login_url = reverse('account:login')
+        data = {
+            'email': 'testuser@example.com',
+            'password': 'testpassword'
+        }
+        response = self.client.post(login_url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        access_token = response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + access_token)
+
         self.category = Category.objects.create(major='Tech', sub='Programming')
         self.image = Image.objects.create(path='path/to/image.jpg')
         self.article = Article.objects.create(
@@ -34,14 +49,20 @@ class CommunityTests(APITestCase):
     def test_article_list_view(self):
         url = reverse('article-list')
         response = self.client.get(url)
+        print("test_article_list_view Response:", json.dumps(response.data, indent=2, ensure_ascii=False))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
+        self.assertNotIn('comments', response.data[0])  # Ensure comments are not in the response
 
     def test_article_detail_view(self):
         url = reverse('article-detail', args=[self.article.id])
         response = self.client.get(url)
+        print("test_article_detail_view Response:", json.dumps(response.data, indent=2, ensure_ascii=False))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['title'], self.article.title)
+        self.assertIn('comments', response.data)  # Ensure comments are in the response
+        self.assertEqual(len(response.data['comments']), 1)
+        self.assertEqual(response.data['comments'][0]['message'], self.comment.message)
 
     def test_article_create_view(self):
         url = reverse('article-create')
