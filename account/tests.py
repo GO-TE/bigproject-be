@@ -217,10 +217,11 @@ class RefreshTokenMiddlewareTest(TestCase):
         access_token = response.data['access']
         refresh_token = response.data['refresh']
 
-        # Simulate access token expiration by directly decoding it
         expired_access_token = AccessToken(access_token)
-        expired_access_token.set_exp(lifetime=timedelta(minutes=-1))  # Set expiration in the past
+        expired_access_token.set_exp(lifetime=timedelta(minutes=-1))
 
-        # Set expired access token in Authorization header
         self.client.defaults['HTTP_AUTHORIZATION'] = f'Bearer {str(expired_access_token)}'
         self.client.cookies['refresh'] = refresh_token
+
+        auth_response = self.client.post(reverse('account:logout'), {'refresh_token': refresh_token})
+        self.assertEqual(auth_response.status_code, status.HTTP_205_RESET_CONTENT)
