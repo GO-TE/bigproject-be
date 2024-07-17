@@ -12,7 +12,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain.chains import RetrievalQA, ConversationChain
 from langchain.memory import ConversationBufferMemory
-from django.http import StreamingHttpResponse
+from langchain.schema import Document
 
 from .models import ChatSession, ChatMessage
 from .serializers import ChatSessionSerializer, ChatMessageSerializer, ChatSessionDetailSerializer
@@ -70,6 +70,11 @@ class OpenAIChatView(APIView):
             else:
                 memory.chat_memory.add_ai_message(message.message)
 
+        # 문서 검색 결과를 메모리에 추가
+        search_results = retriever.get_relevant_documents(query)
+        for result in search_results:
+            memory.chat_memory.add_user_message(result.page_content)
+
         # target_language 설정 >> 일 할 국가 nation 설정
         target_language = 'ko' if nation == 'korea' else 'en'
 
@@ -91,7 +96,10 @@ class OpenAIChatView(APIView):
         session.summary = first_message if len(first_message) <= 12 else first_message[:9] + '...'
         session.save()
 
-        return Response({"response": translated_result}, status=status.HTTP_200_OK)
+        # 검색한 문서 출력용 ( 추후 삭제 )
+        search_results_content = [result.page_content for result in search_results]
+
+        return Response({"response": translated_result, "search_results": search_results_content}, status=status.HTTP_200_OK)
 
     def translate_text(self, text, target_language):
         url = f"https://translation.googleapis.com/language/translate/v2?key={translation_api_key}"
@@ -107,7 +115,7 @@ class OpenAIChatView(APIView):
             return translated_text, detected_language
         else:
             raise Exception(f"Error in translation: {response.status_code}, {response.text}")
-
+        
 # 전체 채팅 세션 나열
 class ChatSessionListView(generics.ListAPIView):
     queryset = ChatSession.objects.all()

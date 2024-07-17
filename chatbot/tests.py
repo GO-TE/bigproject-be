@@ -69,7 +69,9 @@ class ChatbotTests(TestCase):
         }, format='json')
         self.assertEqual(response1.status_code, status.HTTP_200_OK)
         self.assertIn('response', response1.data)
+        self.assertIn('search_results', response1.data)
         result1 = response1.data['response']
+        search_results1 = response1.data['search_results']
 
         # 세션 요약 확인
         session = ChatSession.objects.get(id=self.session.id)
@@ -83,13 +85,17 @@ class ChatbotTests(TestCase):
         }, format='json')
         self.assertEqual(response2.status_code, status.HTTP_200_OK)
         self.assertIn('response', response2.data)
+        self.assertIn('search_results', response2.data)
         result2 = response2.data['response']
+        search_results2 = response2.data['search_results']
 
         print(f"\nSession ID: {self.session.id}")
         print(f"First Query: {query1}")
         print(f"First Response: {result1}")
+        print(f"First Search Results: {json.dumps(search_results1, indent=2, ensure_ascii=False)}")
         print(f"Second Query: {query2}")
         print(f"Second Response: {result2}")
+        print(f"Second Search Results: {json.dumps(search_results2, indent=2, ensure_ascii=False)}")
 
         # 세션 상세 정보와 메시지 확인
         response_detail = self.client.get(f'/chatbot/sessions/{self.session.id}/')
