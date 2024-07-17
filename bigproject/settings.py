@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "chatbot",
     "community",
     "fqa",
+    "ocr",
 ]
 
 MIDDLEWARE = [
