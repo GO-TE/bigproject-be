@@ -26,4 +26,5 @@ urlpatterns = [
     path("community/", include("community.urls")),
     path("fqa/", include("fqa.urls")),
     path("chatbot/", include("chatbot.urls")),
+    path("ocr/", include("ocr.urls")),
 ]
