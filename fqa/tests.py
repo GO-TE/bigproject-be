@@ -119,3 +119,5 @@ class GlossaryListViewTest(TestCase):
         response = self.client.get(self.url, {'content': "좀 어려워서"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(any("어려워서" in glossary['content'] for glossary in response.data['results']))
+
+
