@@ -33,7 +33,7 @@ class Rule(models.Model):
     effective = models.DateField()
     created = models.DateField()
     content = models.TextField()
-    view = models.BigIntegerField(default=0)
+    total_view = models.BigIntegerField(default=0)
     week_view = models.BigIntegerField(default=0)
 
     def __str__(self):
@@ -44,7 +44,7 @@ class Glossary(models.Model):
     terminology = models.CharField(null=False, max_length=100)
     code = models.IntegerField()
     content = models.TextField()
-    view = models.BigIntegerField(default=0)
+    total_view = models.BigIntegerField(default=0)
     week_view = models.BigIntegerField(default=0)
 
     def __str__(self):

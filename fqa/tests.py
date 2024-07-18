@@ -121,3 +121,75 @@ class GlossaryListViewTest(TestCase):
         self.assertTrue(any("어려워서" in glossary['content'] for glossary in response.data['results']))
 
 
+class ViewUpdateTests(TestCase):
+    def setUp(self):
+        self.law = Law.objects.create(
+            law="Test law",
+            ministry="고용노동부",
+            code="10121",
+            content="사장님 돈 좀 많이 주세요 제발요",
+            date=date(2023, 1, 1)
+        )
+        self.rule = Rule.objects.create(
+            rule="Test rule",
+            kind="무슨무슨 법",
+            code="10121",
+            content=f"사장님 돈 좀 많이 주세요 제발요",
+            effective=date(2023, 1, 1),
+            created=date(2023, 1, 1),
+        )
+        self.glossary = Glossary.objects.create(
+            terminology="있어보이는말",
+            code='1232',
+            content=f"좀 어려워서 안써도 될듯"
+        )
+
+        self.url = reverse('view-update')
+
+    def test_increase_law_view_count(self):
+        data = {"category": "law", "id": self.law.id}
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['total_views'], 1)
+        self.assertEqual(response.data['week_views'], 1)
+        self.law.refresh_from_db()
+        self.assertEqual(self.law.total_view, 1)
+        self.assertEqual(self.law.week_view, 1)
+
+    def test_increase_rule_view_count(self):
+        data = {"category": "rule", "id": self.rule.id}
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['total_views'], 1)
+        self.assertEqual(response.data['week_views'], 1)
+        self.rule.refresh_from_db()
+        self.assertEqual(self.rule.total_view, 1)
+        self.assertEqual(self.rule.week_view, 1)
+
+    def test_increase_glossary_view_count(self):
+        data = {"category": "glossary", "id": self.glossary.id}
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['total_views'], 1)
+        self.assertEqual(response.data['week_views'], 1)
+        self.glossary.refresh_from_db()
+        self.assertEqual(self.glossary.total_view, 1)
+        self.assertEqual(self.glossary.week_view, 1)
+
+    def test_invalid_category(self):
+        data = {"category": "invalid", "id": self.law.id}
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['message'], 'Invalid category')
+
+    def test_missing_id(self):
+        data = {"category": "law"}
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['message'], 'Category and ID are required')
+
+    def test_non_existent_id(self):
+        data = {"category": "law", "id": 999}
+        response = self.client.post(self.url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['message'], 'Law with ID 999 does not exist')
