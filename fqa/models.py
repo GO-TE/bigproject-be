@@ -10,3 +10,42 @@ class FAQ(models.Model):
 
     def __str__(self):
         return self.question
+
+
+class Law(models.Model):
+    law = models.CharField(null=False, max_length=100)
+    ministry = models.CharField(max_length=10)
+    code = models.CharField(max_length=20)
+    date = models.DateField()
+    content = models.TextField()
+    total_view = models.BigIntegerField(default=0)
+    week_view = models.BigIntegerField(default=0)
+
+    def __str__(self):
+        return self.law
+
+
+class Rule(models.Model):
+    rule = models.CharField(null=False, max_length=100)
+    kind = models.CharField(max_length=20)
+    code = models.CharField(max_length=10)
+    state = models.CharField(max_length=20)
+    effective = models.DateField()
+    created = models.DateField()
+    content = models.TextField()
+    view = models.BigIntegerField(default=0)
+    week_view = models.BigIntegerField(default=0)
+
+    def __str__(self):
+        return self.rule
+
+
+class Glossary(models.Model):
+    terminology = models.CharField(null=False, max_length=100)
+    code = models.IntegerField()
+    content = models.TextField()
+    view = models.BigIntegerField(default=0)
+    week_view = models.BigIntegerField(default=0)
+
+    def __str__(self):
+        return self.terminology
