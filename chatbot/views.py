@@ -164,9 +164,5 @@ class CreateNewSessionView(APIView):
     def post(self, request):
         session = ChatSession.objects.create(user=request.user)
         serializer = ChatSessionSerializer(session)
-        
-        initial_message_text = "안녕하세요. 전세계 어디에서나 일하고 싶은 당신을 위한, 글로-발 워커입니다.\n질문할 내용이 있으신가요?"
-        initial_message = ChatMessage(session=session, message=initial_message_text, sender=0)
-        initial_message.save()
-
+    
         return Response(serializer.data, status=status.HTTP_201_CREATED)
