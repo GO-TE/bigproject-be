@@ -59,8 +59,14 @@ class OpenAIChatView(APIView):
         retriever = database.as_retriever(search_kwargs={"k": k})
 
         # ConversationChain 설정
-        memory = ConversationBufferMemory()
-        conversation = ConversationChain(llm=chat, memory=memory)
+        memory = ConversationBufferMemory(output_key='result')
+        conversation = RetrievalQA.from_llm(
+            llm=chat, 
+            retriever=retriever, 
+            memory=memory, 
+            return_source_documents=True, 
+            output_key='result'
+        )
 
         # 이전 대화 불러오기
         previous_messages = session.chatmessage_set.order_by('sent_at')
@@ -70,19 +76,25 @@ class OpenAIChatView(APIView):
             else:
                 memory.chat_memory.add_ai_message(message.message)
 
-        # 문서 검색 결과를 메모리에 추가
-        search_results = retriever.get_relevant_documents(query)
-        for result in search_results:
-            memory.chat_memory.add_user_message(result.page_content)
-
         # target_language 설정 >> 일 할 국가 nation 설정
         target_language = 'ko' if nation == 'korea' else 'en'
 
         # 입력 메시지 번역 (얻은 답변을 처음 질문받았을 때의 언어로 번역)
         translated_query, detected_language = self.translate_text(query, target_language)
 
-        result = conversation.predict(input=translated_query)
-        translated_result, _ = self.translate_text(result, detected_language)
+        # 관련 정보를 포함하여 대화 모델에 전달
+        instructions = (
+            "'저'라는 표현과 '제'라는 단어는 사용하지 마시고 상대방에게 말하듯이 해주세요. "
+            "당신은 제3의 입장입니다. 자신의 회사가 아닌 사용자 입장에서 상황을 이해하고 공감해 주세요. "
+            "상대방의 상황에 대해 적극적으로 공감하는 말을 먼저 해주세요. "
+            "공감하는 말 다음에는 관련 법률 내용을 요약해서 자세하게 설명해주세요."
+            "법률 내용 설명 다음에는 인사이트나 조언을 길게 해주세요."
+            "법률 정보는 지어내지 마시고 DB에 있는 내용을 사용해 주세요."
+        )
+        conversation_input = f"Instructions:\n{instructions}\n\nQuestion:\n{translated_query}"
+
+        result = conversation(conversation_input)
+        translated_result, _ = self.translate_text(result['result'], detected_language)
         
         # 새 메시지 저장
         new_message = ChatMessage(session=session, message=query, sender=1)  # 1 for user
@@ -96,10 +108,7 @@ class OpenAIChatView(APIView):
         session.summary = first_message if len(first_message) <= 12 else first_message[:9] + '...'
         session.save()
 
-        # 검색한 문서 출력용 ( 추후 삭제 )
-        search_results_content = [result.page_content for result in search_results]
-
-        return Response({"response": translated_result, "search_results": search_results_content}, status=status.HTTP_200_OK)
+        return Response({"response": translated_result}, status=status.HTTP_200_OK)
 
     def translate_text(self, text, target_language):
         url = f"https://translation.googleapis.com/language/translate/v2?key={translation_api_key}"
@@ -115,6 +124,7 @@ class OpenAIChatView(APIView):
             return translated_text, detected_language
         else:
             raise Exception(f"Error in translation: {response.status_code}, {response.text}")
+
         
 # 전체 채팅 세션 나열
 class ChatSessionListView(generics.ListAPIView):
@@ -154,4 +164,9 @@ class CreateNewSessionView(APIView):
     def post(self, request):
         session = ChatSession.objects.create(user=request.user)
         serializer = ChatSessionSerializer(session)
+        
+        initial_message_text = "안녕하세요. 전세계 어디에서나 일하고 싶은 당신을 위한, 글로-발 워커입니다.\n질문할 내용이 있으신가요?"
+        initial_message = ChatMessage(session=session, message=initial_message_text, sender=0)
+        initial_message.save()
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)

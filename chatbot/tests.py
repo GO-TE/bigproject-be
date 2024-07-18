@@ -57,9 +57,9 @@ class ChatbotTests(TestCase):
         print(f"\ntest_get_messages >> Messages retrieved for session ID: {self.session.id}\nMessages: {json.dumps(response.data['messages'], indent=2, ensure_ascii=False)}")
 
     def test_openai_chat(self):
-        query1 = '호주 고용법 알려줘.' #  << 한국 고용법 , 영국 고용법 >> Hãy cho tôi biết về luật lao động của nước Anh.
-        query2 = '호주 고용법 알려줘.' # 한국 고용법 >> Xin vui lòng cho chúng tôi biết về luật lao động của Hàn Quốc.
-        nation = 'australia' # 일 할 국가 설정
+        query1 = '제가 회사에서 발생한 화재로 크게 다쳤어요. 이와 관련된 법 조언을 얻을 수 있을까요?' #  << 한국 고용법 , 영국 고용법 >> Hãy cho tôi biết về luật lao động của nước Anh.
+        query2 = '난 중국인인데 한국에 워킹 홀리데이를 갔다가 산재를 입었어. 참고할만한 법률 조항 알려줘.' # 한국 고용법 >> Xin vui lòng cho chúng tôi biết về luật lao động của Hàn Quốc.
+        nation = 'korea' # 일 할 국가 설정
 
         # 첫 번째 쿼리
         response1 = self.client.post('/chatbot/chat/', {
@@ -69,9 +69,9 @@ class ChatbotTests(TestCase):
         }, format='json')
         self.assertEqual(response1.status_code, status.HTTP_200_OK)
         self.assertIn('response', response1.data)
-        self.assertIn('search_results', response1.data)
+        # self.assertIn('search_results', response1.data)
         result1 = response1.data['response']
-        search_results1 = response1.data['search_results']
+        # search_results1 = response1.data['search_results']
 
         # 세션 요약 확인
         session = ChatSession.objects.get(id=self.session.id)
@@ -85,17 +85,17 @@ class ChatbotTests(TestCase):
         }, format='json')
         self.assertEqual(response2.status_code, status.HTTP_200_OK)
         self.assertIn('response', response2.data)
-        self.assertIn('search_results', response2.data)
+        # self.assertIn('search_results', response2.data)
         result2 = response2.data['response']
-        search_results2 = response2.data['search_results']
+        # search_results2 = response2.data['search_results']
 
         print(f"\nSession ID: {self.session.id}")
         print(f"First Query: {query1}")
         print(f"First Response: {result1}")
-        print(f"First Search Results: {json.dumps(search_results1, indent=2, ensure_ascii=False)}")
+        # print(f"First Search Results: {json.dumps(search_results1, indent=2, ensure_ascii=False)}")
         print(f"Second Query: {query2}")
         print(f"Second Response: {result2}")
-        print(f"Second Search Results: {json.dumps(search_results2, indent=2, ensure_ascii=False)}")
+        # print(f"Second Search Results: {json.dumps(search_results2, indent=2, ensure_ascii=False)}")
 
         # 세션 상세 정보와 메시지 확인
         response_detail = self.client.get(f'/chatbot/sessions/{self.session.id}/')
