@@ -4,7 +4,8 @@ from .views import (
     FAQByCategoryListView,
     LawListView,
     RuleListView,
-    GlossaryListView
+    GlossaryListView,
+    ViewUpdateView
 )
 
 urlpatterns = [
@@ -12,5 +13,6 @@ urlpatterns = [
     path('fqas/category/<str:category>/', FAQByCategoryListView.as_view(), name='faq-by-category'),
     path('law/', LawListView().as_view(), name='law'),
     path('rule/', RuleListView().as_view(), name='rule'),
-    path('glossary/', GlossaryListView().as_view(), name='glossary')
+    path('glossary/', GlossaryListView().as_view(), name='glossary'),
+    path('api/view-update/', ViewUpdateView.as_view(), name='view-update')
 ]
