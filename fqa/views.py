@@ -41,7 +41,6 @@ class LawListView(ListAPIView):
     pagination_class = FQAPagination
     permission_classes = [AllowAny]
 
-
     def get_queryset(self):
         queryset = Law.objects.all().order_by('-law')
         title_query = self.request.query_params.get('title', None)
@@ -54,3 +53,44 @@ class LawListView(ListAPIView):
 
         return queryset
 
+
+class RuleListView(ListAPIView):
+    queryset = Rule.objects.all()
+    serializer_class = RuleSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['title', 'content']
+    pagination_class = FQAPagination
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        queryset = Rule.objects.all().order_by('-rule')
+        title_query = self.request.query_params.get('title', None)
+        content_query = self.request.query_params.get('content', None)
+
+        if title_query:
+            queryset = queryset.filter(rule__icontains=title_query)
+        if content_query:
+            queryset = queryset.filter(content__icontains=content_query)
+
+        return queryset
+
+
+class GlossaryListView(ListAPIView):
+    queryset = Glossary.objects.all()
+    serializer_class = GlossarySerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['title', 'content']
+    pagination_class = FQAPagination
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        queryset = Glossary.objects.all().order_by('-terminology')
+        title_query = self.request.query_params.get('title', None)
+        content_query = self.request.query_params.get('content', None)
+
+        if title_query:
+            queryset = queryset.filter(terminology__icontains=title_query)
+        if content_query:
+            queryset = queryset.filter(content__icontains=content_query)
+
+        return queryset
