@@ -9,6 +9,7 @@ from community.models import Article, Comment, Category, Image
 
 User = get_user_model()
 
+
 class CommunityTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create(
@@ -53,6 +54,7 @@ class CommunityTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertNotIn('comments', response.data[0])  # Ensure comments are not in the response
+        self.assertEqual(response.data[0]['comment_count'], 1)  # Ensure comment count is correct
 
     def test_article_detail_view(self):
         url = reverse('article-detail', args=[self.article.id])
