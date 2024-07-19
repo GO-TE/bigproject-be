@@ -27,8 +27,10 @@ class ArticleSerializer(serializers.ModelSerializer):
 
 class ArticleListSerializer(serializers.ModelSerializer):
     user_nickname = serializers.CharField(source='user.nickname', read_only=True)
+    comment_count = serializers.IntegerField(source='comment_set.count', read_only=True)
+
 
     class Meta:
         model = Article
         fields = ['id', 'user_nickname', 'image', 'category', 'title', 'content', 'created_at', 'updated_at', 'view',
-                  'is_active']
+                  'is_active', 'comment_count']
