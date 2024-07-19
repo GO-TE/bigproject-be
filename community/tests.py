@@ -21,6 +21,16 @@ class CommunityTests(APITestCase):
             work_at='testwork',
             is_active=True
         )
+        self.unknown_user = User.objects.create(
+            email='u@u.com',
+            password=make_password('unknown'),
+            nickname='unknown',
+            username='unknown',
+            nationality='testnation',
+            work_at='testwork',
+            is_active=True
+
+        )
         self.client = APIClient()
         login_url = reverse('account:login')  # 정확한 URL 네임스페이스 확인
         data = {
@@ -41,6 +51,13 @@ class CommunityTests(APITestCase):
             content='This is a test article.',
             image=self.image
         )
+        self.another_article = Article.objects.create(
+            user=self.unknown_user,
+            category=self.category,
+            title='Another author',
+            content='text',
+            image=self.image
+        )
         self.comment = Comment.objects.create(
             article=self.article,
             user=self.user,
@@ -52,9 +69,9 @@ class CommunityTests(APITestCase):
         response = self.client.get(url)
         print("test_article_list_view Response:", json.dumps(response.data, indent=2, ensure_ascii=False))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data), 2)
         self.assertNotIn('comments', response.data[0])  # Ensure comments are not in the response
-        self.assertEqual(response.data[0]['comment_count'], 1)  # Ensure comment count is correct
+        self.assertEqual(response.data[0]['comment_count'], 0)  # Ensure comment count is correct
 
     def test_article_detail_view(self):
         url = reverse('article-detail', args=[self.article.id])
@@ -66,6 +83,12 @@ class CommunityTests(APITestCase):
         self.assertEqual(len(response.data['comments']), 1)
         self.assertEqual(response.data['comments'][0]['message'], self.comment.message)
 
+        # 다른 작성자의 글일 때 확인
+        another_url = reverse('article-detail', args=[self.another_article.id])
+        response = self.client.get(another_url)
+        self.assertFalse(response.data.get('is_author'))
+
+
     def test_article_create_view(self):
         url = reverse('article-create')
         data = {
@@ -76,7 +99,7 @@ class CommunityTests(APITestCase):
         }
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Article.objects.count(), 2)
+        self.assertEqual(Article.objects.count(), 3)
 
     def test_comment_list_view(self):
         url = reverse('comment-list')
@@ -104,4 +127,4 @@ class CommunityTests(APITestCase):
         url = reverse('article-by-category', args=[self.category.id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data), 2)
