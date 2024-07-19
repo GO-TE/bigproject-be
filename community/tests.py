@@ -21,7 +21,7 @@ class CommunityTests(APITestCase):
             is_active=True
         )
         self.client = APIClient()
-        login_url = reverse('account:login')
+        login_url = reverse('account:login')  # 정확한 URL 네임스페이스 확인
         data = {
             'email': 'testuser@example.com',
             'password': 'testpassword'
@@ -32,7 +32,7 @@ class CommunityTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + access_token)
 
         self.category = Category.objects.create(major='Tech', sub='Programming')
-        self.image = Image.objects.create(path='path/to/image.jpg')
+        self.image = Image.objects.create(path='path/to/image.jpg', user=self.user)
         self.article = Article.objects.create(
             user=self.user,
             category=self.category,
