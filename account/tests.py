@@ -1,4 +1,7 @@
-from datetime import timedelta
+from datetime import (
+    timedelta,
+    datetime
+)
 
 from django.test import TestCase
 from django.urls import reverse
@@ -218,9 +221,9 @@ class RefreshTokenMiddlewareTest(TestCase):
         refresh_token = response.data['refresh']
 
         expired_access_token = AccessToken(access_token)
-        expired_access_token.set_exp(lifetime=timedelta(minutes=-1))
+        expired_access_token.set_exp(from_time=datetime.utcnow() - timedelta(minutes=1))
 
-        self.client.defaults['HTTP_AUTHORIZATION'] = f'Bearer {str(expired_access_token)}'
+        self.client.defaults['HTTP_AUTHORIZATION'] = f'Bearer {expired_access_token}'
         self.client.cookies['refresh'] = refresh_token
 
         auth_response = self.client.post(reverse('account:logout'), {'refresh_token': refresh_token})
