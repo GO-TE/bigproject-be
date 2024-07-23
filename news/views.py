@@ -19,7 +19,7 @@ class NewsIndexThumbnailView(APIView):  # 메인 페이지 3개 띄우기 (레�
     def get(self, reqeust):
         articles = cache.get('news_articles')
         if not articles:
-            articles = list(NewsArticle.objects.order_by('-timestamp').values('id', 'title', 'summary', 'image_link'))[:3]
+            articles = list(NewsArticle.objects.order_by('-timestamp').values('id', 'title', 'image_link', 'news_agency', 'summary', 'timestamp'))[:3]
         else:
             return Response({'error': 'No articles found'}, status=status.HTTP_404_NOT_FOUND)
         return Response({'articles': articles}, status=status.HTTP_200_OK)
