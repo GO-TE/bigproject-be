@@ -12,4 +12,4 @@ class ChatMessage(models.Model):
     session = models.ForeignKey(ChatSession, on_delete=models.CASCADE)
     message = models.TextField(null=True)
     sent_at = models.DateTimeField(auto_now_add=True)
-    sender = models.IntegerField(null=True)  
+    sender = models.IntegerField(null=True)

@@ -11,9 +11,12 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 import json
-
+import os
 from pathlib import Path
-from datetime import timedelta
+from datetime import (
+    timedelta,
+    datetime
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -47,7 +50,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
-    "django_cron",
+    "django_crontab",
 
     # application
     "account",
@@ -55,6 +58,7 @@ INSTALLED_APPS = [
     "community",
     "fqa",
     "ocr",
+    "news",
 ]
 
 MIDDLEWARE = [
@@ -205,3 +209,9 @@ CORS_ORIGIN_WHITELIST = (
     "http://34.22.69.185:3000",
     "http://34.22.69.168:3000"
 )
+
+
+# 스케줄링 목록
+CRONJOBS = [
+    ('0 * * * *', 'news.cron.news_crawling_job', '>>', os.path.join(BASE_DIR, f'/log/{datetime.now().strftime("%Y-%m-%d")}_news.log')),
+]

@@ -3,3 +3,9 @@
 .DS_Store
 secrets.json
 DB
+account/__pycache__
+fqa/__pycache__
+chatbot/__pycache__
+news/__pycache__
+community/__pycache__
+ocr/__pycache__

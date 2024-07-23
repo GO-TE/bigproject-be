@@ -11,3 +11,7 @@ pytest
 Pillow
 opencv-python-headless
 django-cors-header
+django-cron
+django-redis
+mysqlclient
+mysql-connector-python
