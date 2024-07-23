@@ -1,7 +1,5 @@
 import os
 import json
-import openai
-import time
 import requests
 
 from rest_framework.views import APIView
@@ -12,9 +10,8 @@ from rest_framework.decorators import permission_classes
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
-from langchain.chains import RetrievalQA, ConversationChain
+from langchain.chains import RetrievalQA
 from langchain.memory import ConversationBufferMemory
-from langchain.schema import Document
 
 from .models import ChatSession, ChatMessage
 from .serializers import ChatSessionSerializer, ChatMessageSerializer, ChatSessionDetailSerializer
@@ -161,7 +158,6 @@ class ChatSessionDetailView(generics.RetrieveDestroyAPIView):
         return Response(data)
 
 # 새 대화 세션 생성
-
 @permission_classes([IsAuthenticated])
 class CreateNewSessionView(APIView):
 

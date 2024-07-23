@@ -6,7 +6,7 @@ from rest_framework.generics import (
     ListAPIView
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.exceptions import NotFound
 from rest_framework.decorators import permission_classes
 
 from .models import Article, Comment, Category

@@ -4,7 +4,6 @@ from rest_framework import status
 from .models import ChatSession, ChatMessage
 from account.models import User
 import json
-import time
 
 class ChatbotTests(TestCase):
 
@@ -35,7 +34,7 @@ class ChatbotTests(TestCase):
         response = self.client.get('/chatbot/sessions/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
-        self.assertIn('summary', response.data[0])  # Check if summary is in the session list
+        self.assertIn('summary', response.data[0])  
         print(f"\ntest_get_session_list >> Session list retrieved: {json.dumps(response.data, indent=2, ensure_ascii=False)}")
 
     def test_get_session_detail(self):
@@ -45,7 +44,7 @@ class ChatbotTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['session_id'], self.session.id)
         self.assertIn('messages', response.data)
-        self.assertIn('summary', response.data)  # Check if summary is in the session detail
+        self.assertIn('summary', response.data) 
         print(f"\ntest_get_session_detail >> Session details retrieved for ID: {self.session.id}\nDetails: {json.dumps(response.data, indent=2, ensure_ascii=False)}")
 
     def test_get_messages(self):
@@ -53,7 +52,7 @@ class ChatbotTests(TestCase):
         response = self.client.get(f'/chatbot/sessions/{self.session.id}/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('messages', response.data)
-        self.assertIn('summary', response.data)  # Check if summary is in the session detail
+        self.assertIn('summary', response.data) 
         print(f"\ntest_get_messages >> Messages retrieved for session ID: {self.session.id}\nMessages: {json.dumps(response.data['messages'], indent=2, ensure_ascii=False)}")
 
     def test_openai_chat(self):
@@ -100,7 +99,7 @@ class ChatbotTests(TestCase):
         # 세션 상세 정보와 메시지 확인
         response_detail = self.client.get(f'/chatbot/sessions/{self.session.id}/')
         self.assertEqual(response_detail.status_code, status.HTTP_200_OK)
-        self.assertIn('summary', response_detail.data)  # Check if summary is in the session detail
+        self.assertIn('summary', response_detail.data) 
         print(f"\ntest_get_session_detail >> Session details after chat:\n{json.dumps(response_detail.data, indent=2, ensure_ascii=False)}")
 
         # 세션 리스트 확인
