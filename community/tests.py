@@ -71,8 +71,9 @@ class CommunityTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
         self.assertNotIn('comments', response.data[0])  
-        self.assertEqual(response.data[0]['comment_count'], 0)  
-
+        self.assertEqual(response.data[0]['comment_count'], 1 if self.article.id == response.data[0]['id'] else 0)
+        self.assertEqual(response.data[1]['comment_count'], 1 if self.article.id == response.data[1]['id'] else 0)
+        
     def test_article_detail_view(self):
         url = reverse('article-detail', args=[self.article.id])
         response = self.client.get(url)
