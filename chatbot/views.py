@@ -8,6 +8,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, generics
+from rest_framework.decorators import permission_classes
+
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain.chains import RetrievalQA, ConversationChain
@@ -28,8 +30,8 @@ os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
 chat = ChatOpenAI(model="gpt-3.5-turbo")
 embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
 
+@permission_classes([IsAuthenticated])
 class OpenAIChatView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         session_id = request.data.get('session_id')
@@ -127,15 +129,16 @@ class OpenAIChatView(APIView):
 
         
 # 전체 채팅 세션 나열
+@permission_classes([IsAuthenticated])
 class ChatSessionListView(generics.ListAPIView):
     queryset = ChatSession.objects.all()
     serializer_class = ChatSessionSerializer
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return ChatSession.objects.filter(user=self.request.user).prefetch_related('chatmessage_set')
 
 # 특정 채팅 세션 ID의 정보 및 메시지 나열, 세션 삭제
+@permission_classes([IsAuthenticated])
 class ChatSessionDetailView(generics.RetrieveDestroyAPIView):
     queryset = ChatSession.objects.all()
     serializer_class = ChatSessionDetailSerializer
@@ -158,8 +161,9 @@ class ChatSessionDetailView(generics.RetrieveDestroyAPIView):
         return Response(data)
 
 # 새 대화 세션 생성
+
+@permission_classes([IsAuthenticated])
 class CreateNewSessionView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         session = ChatSession.objects.create(user=request.user)

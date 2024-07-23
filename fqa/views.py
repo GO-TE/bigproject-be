@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import permission_classes
 
 from .models import (
     FAQ,
@@ -21,29 +22,26 @@ from .serializers import (
 )
 from .pagination import FQAPagination
 
-
+@permission_classes([AllowAny])
 class FAQListView(ListAPIView):
     queryset = FAQ.objects.all()
     serializer_class = FAQSerializer
-    permission_classes = [AllowAny]
 
-
+@permission_classes([AllowAny])
 class FAQByCategoryListView(ListAPIView):
     serializer_class = FAQSerializer
-    permission_classes = [AllowAny]
 
     def get_queryset(self):
         category = self.kwargs['category']
         return FAQ.objects.filter(category=category)
 
-
+@permission_classes([AllowAny])
 class LawListView(ListAPIView):
     queryset = Law.objects.all()
     serializer_class = LawSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'content']
     pagination_class = FQAPagination
-    permission_classes = [AllowAny]
 
     def get_queryset(self):
         queryset = Law.objects.all().order_by('-law')
@@ -57,14 +55,13 @@ class LawListView(ListAPIView):
 
         return queryset
 
-
+@permission_classes([AllowAny])
 class RuleListView(ListAPIView):
     queryset = Rule.objects.all()
     serializer_class = RuleSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'content']
     pagination_class = FQAPagination
-    permission_classes = [AllowAny]
 
     def get_queryset(self):
         queryset = Rule.objects.all().order_by('-rule')
@@ -78,14 +75,13 @@ class RuleListView(ListAPIView):
 
         return queryset
 
-
+@permission_classes([AllowAny])
 class GlossaryListView(ListAPIView):
     queryset = Glossary.objects.all()
     serializer_class = GlossarySerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'content']
     pagination_class = FQAPagination
-    permission_classes = [AllowAny]
 
     def get_queryset(self):
         queryset = Glossary.objects.all().order_by('-terminology')
@@ -99,9 +95,8 @@ class GlossaryListView(ListAPIView):
 
         return queryset
 
-
+@permission_classes([AllowAny])
 class ViewUpdateView(APIView):
-    permission_classes = [AllowAny]
 
     def post(self, request):
         obj = request.data.get('category', None)
