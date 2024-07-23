@@ -29,6 +29,8 @@ class Rule(models.Model):
     rule = models.CharField(null=False, max_length=100)
     kind = models.CharField(max_length=20)
     code = models.CharField(max_length=10)
+    ministry = models.CharField(max_length=30)
+    history = models.CharField(max_legnth=20)
     state = models.CharField(max_length=20)
     effective = models.DateField()
     created = models.DateField()
