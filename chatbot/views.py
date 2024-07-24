@@ -3,6 +3,7 @@ import json
 import requests
 import faiss
 import pickle
+import html
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -57,6 +58,21 @@ def get_cosine_similarity(query, index, vectorizer):
     D, I = index.search(query_vector, 3)  # 상위 3개 검색
     return I[0], D[0]
 
+def translate_text(text, target_language):
+    url = f"https://translation.googleapis.com/language/translate/v2?key={translation_api_key}"
+    params = {
+        'q': text,
+        'target': target_language
+    }
+    response = requests.post(url, data=params)
+    if response.status_code == 200:
+        result = response.json()
+        translated_text = result['data']['translations'][0]['translatedText']
+        detected_language = result['data']['translations'][0]['detectedSourceLanguage']
+        return translated_text, detected_language
+    else:
+        raise Exception(f"Error in translation: {response.status_code}, {response.text}")
+
 @permission_classes([IsAuthenticated])
 class OpenAIChatView(APIView):
 
@@ -109,7 +125,7 @@ class OpenAIChatView(APIView):
         target_language = 'ko' if nation == 'korea' else 'en'
 
         # 입력 메시지 번역 (얻은 답변을 처음 질문받았을 때의 언어로 번역)
-        translated_query, detected_language = self.translate_text(query, target_language)
+        translated_query, detected_language = translate_text(query, target_language)
 
         # 관련 정보를 포함하여 대화 모델에 전달
         instructions = (
@@ -123,8 +139,10 @@ class OpenAIChatView(APIView):
         conversation_input = f"Instructions:\n{instructions}\n\nQuestion:\n{translated_query}"
 
         result = conversation(conversation_input)
-        translated_result, _ = self.translate_text(result['result'], detected_language)
+        translated_result, _ = translate_text(result['result'], detected_language)
         
+        translated_result = html.unescape(translated_result)
+
         # 새 메시지 저장
         new_message = ChatMessage(session=session, message=query, sender=1)  # 1 for user
         new_message.save()
@@ -139,26 +157,12 @@ class OpenAIChatView(APIView):
 
         return Response({"response": translated_result}, status=status.HTTP_200_OK)
 
-    def translate_text(self, text, target_language):
-        url = f"https://translation.googleapis.com/language/translate/v2?key={translation_api_key}"
-        params = {
-            'q': text,
-            'target': target_language
-        }
-        response = requests.post(url, data=params)
-        if response.status_code == 200:
-            result = response.json()
-            translated_text = result['data']['translations'][0]['translatedText']
-            detected_language = result['data']['translations'][0]['detectedSourceLanguage']
-            return translated_text, detected_language
-        else:
-            raise Exception(f"Error in translation: {response.status_code}, {response.text}")
-
 @permission_classes([IsAuthenticated])
 class CaseSearchView(APIView):
 
     def post(self, request):
         query = request.data.get('query')
+        detected_language = request.data.get('detected_language', 'ko')  # 감지된 언어를 받음
 
         if not query:
             return Response({'error': 'Query is required.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -170,10 +174,24 @@ class CaseSearchView(APIView):
                 {"index": index, "score": score, "content": doc_contents_case[index]}
                 for index, score in zip(top_indices, top_scores)
             ]
-            return Response({"case_results": case_results}, status=status.HTTP_200_OK)
+
+            # 판례 내용을 감지된 언어로 번역
+            translated_case_results = []
+            for case in case_results:
+                translated_text, _ = translate_text(case['content'], detected_language)
+                case['translated_content'] = html.unescape(translated_text)
+                translated_case_results.append(case)
+
+            translated_ui_texts = {
+                "search_cases": translate_text("판례 찾기", detected_language)[0],
+                "case_example": translate_text("판례 사례", detected_language)[0],
+                "full_text": translate_text("내용 전문", detected_language)[0]
+            }
+
+            return Response({"case_results": translated_case_results, "ui_texts": translated_ui_texts}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        
 # 전체 채팅 세션 나열
 @permission_classes([IsAuthenticated])
 class ChatSessionListView(generics.ListAPIView):
