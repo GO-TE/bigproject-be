@@ -155,7 +155,11 @@ class OpenAIChatView(APIView):
         session.summary = first_message if len(first_message) <= 12 else first_message[:9] + '...'
         session.save()
 
-        return Response({"response": translated_result}, status=status.HTTP_200_OK)
+        translated_ui_texts = {
+            "search_cases": translate_text("판례 찾기", detected_language)[0]
+        }
+
+        return Response({"response": translated_result, "ui_texts": translated_ui_texts}, status=status.HTTP_200_OK)
 
 @permission_classes([IsAuthenticated])
 class CaseSearchView(APIView):
@@ -175,23 +179,20 @@ class CaseSearchView(APIView):
                 for index, score in zip(top_indices, top_scores)
             ]
 
-            # 판례 내용을 감지된 언어로 번역
-            translated_case_results = []
+            # 판례 내용을 감지된 언어로 번역하여 content에 저장
             for case in case_results:
                 translated_text, _ = translate_text(case['content'], detected_language)
-                case['translated_content'] = html.unescape(translated_text)
-                translated_case_results.append(case)
+                case['content'] = translated_text
 
-            translated_ui_texts = {
-                "search_cases": translate_text("판례 찾기", detected_language)[0],
+            translated_ui_texts_2 = {
                 "case_example": translate_text("판례 사례", detected_language)[0],
                 "full_text": translate_text("내용 전문", detected_language)[0]
             }
 
-            return Response({"case_results": translated_case_results, "ui_texts": translated_ui_texts}, status=status.HTTP_200_OK)
+            return Response({"case_results": case_results, "ui_texts": translated_ui_texts_2}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 # 전체 채팅 세션 나열
 @permission_classes([IsAuthenticated])
 class ChatSessionListView(generics.ListAPIView):
