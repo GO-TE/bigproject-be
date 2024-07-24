@@ -213,5 +213,5 @@ CORS_ORIGIN_WHITELIST = (
 
 # 스케줄링 목록
 CRONJOBS = [
-    ('0 * * * *', 'news.cron.news_crawling_job', '>>', os.path.join(BASE_DIR, f'/log/{datetime.now().strftime("%Y-%m-%d")}_news.log')),
+    ('* * * * *', 'news.cron.news_crawling_job', '>>', os.path.join(BASE_DIR, f'/log/{datetime.now().strftime("%Y-%m-%d")}_news.log 2>&1')),
 ]
