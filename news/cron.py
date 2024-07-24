@@ -35,7 +35,6 @@ def news_crawling_job():
             image_link = image_img['data-src'] if image_img and 'data-src' in image_img.attrs else ""
 
         if title and summary and not NewsArticle.objects.filter(title=title, news_link=news_link).exists():
-            NewsArticle.objects.create(title=title, summary=summary, news_link=news_link, image_link=image_link)
             news_data.append({"title": title, "summary": summary, "news_link": news_link, "image_link": image_link})
             news_url.append(news_link)
 
