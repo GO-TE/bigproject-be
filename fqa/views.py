@@ -44,7 +44,7 @@ class LawListView(ListAPIView):
     pagination_class = FQAPagination
 
     def get_queryset(self):
-        queryset = Law.objects.all().order_by('-law')
+        queryset = Law.objects.all().order_by('total_view')
         title_query = self.request.query_params.get('title', None)
         content_query = self.request.query_params.get('content', None)
 
@@ -64,7 +64,7 @@ class RuleListView(ListAPIView):
     pagination_class = FQAPagination
 
     def get_queryset(self):
-        queryset = Rule.objects.all().order_by('-rule')
+        queryset = Rule.objects.all().order_by('total_view')
         title_query = self.request.query_params.get('title', None)
         content_query = self.request.query_params.get('content', None)
 
@@ -84,7 +84,7 @@ class GlossaryListView(ListAPIView):
     pagination_class = FQAPagination
 
     def get_queryset(self):
-        queryset = Glossary.objects.all().order_by('-terminology')
+        queryset = Glossary.objects.all().order_by('total_view')
         title_query = self.request.query_params.get('title', None)
         content_query = self.request.query_params.get('content', None)
 
