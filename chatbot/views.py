@@ -1,22 +1,26 @@
 import os
 import json
-import openai
-import time
 import requests
+import faiss
+import pickle
+
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, generics
+from rest_framework.decorators import permission_classes
+
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
-from langchain.chains import RetrievalQA, ConversationChain
+from langchain.chains import RetrievalQA
 from langchain.memory import ConversationBufferMemory
-from langchain.schema import Document
 
 from .models import ChatSession, ChatMessage
 from .serializers import ChatSessionSerializer, ChatMessageSerializer, ChatSessionDetailSerializer
 
+# API 키
 with open('secrets.json') as f:
     keys = json.load(f)
 
@@ -25,11 +29,36 @@ translation_api_key = keys['google_api_key']
 
 os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
 
+# 챗봇 세팅
 chat = ChatOpenAI(model="gpt-3.5-turbo")
 embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
 
+# 판례 파일 경로
+index_file_path = os.path.join(os.path.dirname(__file__), 'faiss_index.index')
+pickle_file_path = os.path.join(os.path.dirname(__file__), 'case_contents.pkl')
+
+# 저장된 인덱스를 로드
+loaded_index_case = faiss.read_index(index_file_path)
+
+# 판례 내용을 피클 파일에서 로드
+with open(pickle_file_path, 'rb') as f:
+    doc_contents_case = pickle.load(f)
+
+# 벡터 차원
+d = loaded_index_case.d
+
+# 텍스트 데이터를 TF-IDF 벡터로 변환
+vectorizer = TfidfVectorizer(max_features=5000)
+vectorizer.fit(doc_contents_case)
+
+# 코사인 유사도 계산 함수
+def get_cosine_similarity(query, index, vectorizer):
+    query_vector = vectorizer.transform([query]).toarray().astype('float32')
+    D, I = index.search(query_vector, 3)  # 상위 3개 검색
+    return I[0], D[0]
+
+@permission_classes([IsAuthenticated])
 class OpenAIChatView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         session_id = request.data.get('session_id')
@@ -125,17 +154,37 @@ class OpenAIChatView(APIView):
         else:
             raise Exception(f"Error in translation: {response.status_code}, {response.text}")
 
-        
+@permission_classes([IsAuthenticated])
+class CaseSearchView(APIView):
+
+    def post(self, request):
+        query = request.data.get('query')
+
+        if not query:
+            return Response({'error': 'Query is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # 질문(query)에 대해 판례 검색
+            top_indices, top_scores = get_cosine_similarity(query, loaded_index_case, vectorizer)
+            case_results = [
+                {"index": index, "score": score, "content": doc_contents_case[index]}
+                for index, score in zip(top_indices, top_scores)
+            ]
+            return Response({"case_results": case_results}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 # 전체 채팅 세션 나열
+@permission_classes([IsAuthenticated])
 class ChatSessionListView(generics.ListAPIView):
     queryset = ChatSession.objects.all()
     serializer_class = ChatSessionSerializer
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return ChatSession.objects.filter(user=self.request.user).prefetch_related('chatmessage_set')
 
 # 특정 채팅 세션 ID의 정보 및 메시지 나열, 세션 삭제
+@permission_classes([IsAuthenticated])
 class ChatSessionDetailView(generics.RetrieveDestroyAPIView):
     queryset = ChatSession.objects.all()
     serializer_class = ChatSessionDetailSerializer
@@ -158,8 +207,8 @@ class ChatSessionDetailView(generics.RetrieveDestroyAPIView):
         return Response(data)
 
 # 새 대화 세션 생성
+@permission_classes([IsAuthenticated])
 class CreateNewSessionView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         session = ChatSession.objects.create(user=request.user)

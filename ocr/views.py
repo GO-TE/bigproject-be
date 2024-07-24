@@ -2,14 +2,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
+
 import requests
 import uuid
 import time
 import json
 import pandas as pd
-import cv2
-import numpy as np
-from matplotlib import pyplot as plt
 from PIL import Image
 import io
 

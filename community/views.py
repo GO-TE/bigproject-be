@@ -6,7 +6,8 @@ from rest_framework.generics import (
     ListAPIView
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.exceptions import NotFound
+from rest_framework.decorators import permission_classes
 
 from .models import Article, Comment, Category
 from .serializers import (
@@ -16,9 +17,8 @@ from .serializers import (
 )
 from .permissions import IsOwnerOrReadOnly
 
-
+@permission_classes([AllowAny])
 class ArticleListView(APIView):
-    permission_classes = [AllowAny]
 
     def get(self, request):
         try:
@@ -43,11 +43,10 @@ class ArticleListView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-
+@permission_classes([IsAuthenticated,IsOwnerOrReadOnly])
 class ArticleDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Article.objects.select_related('user', 'category').prefetch_related('comment_set')
     serializer_class = ArticleSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
     def retrieve(self, request, *args, **kwargs):
         try:
@@ -60,11 +59,10 @@ class ArticleDetailView(RetrieveUpdateDestroyAPIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-
+@permission_classes([IsAuthenticated])
 class ArticleCreateView(CreateAPIView):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
-    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         try:
@@ -72,17 +70,15 @@ class ArticleCreateView(CreateAPIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-
+@permission_classes([AllowAny])
 class CommentListView(ListAPIView):
     queryset = Comment.objects.select_related('article', 'user')
     serializer_class = CommentSerializer
-    permission_classes = [AllowAny]
 
-
+@permission_classes([IsAuthenticated,IsOwnerOrReadOnly])
 class CommentDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.select_related('article', 'user')
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
     def get_object(self):
         try:
@@ -93,11 +89,10 @@ class CommentDetailView(RetrieveUpdateDestroyAPIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-
+@permission_classes([IsAuthenticated])
 class ArticleCommentCreateView(CreateAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         try:
@@ -109,9 +104,8 @@ class ArticleCommentCreateView(CreateAPIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-
+@permission_classes([AllowAny])
 class ArticleByCategoryListView(APIView):
-    permission_classes = [AllowAny]
 
     def get(self, request, category_id):
         try:

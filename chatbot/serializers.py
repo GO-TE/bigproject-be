@@ -6,7 +6,7 @@ class ChatSessionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ChatSession
-        fields = ['session_id', 'user', 'created_at', 'updated_at', 'is_active', 'summary']  # summary 필드 추가
+        fields = ['session_id', 'user', 'created_at', 'updated_at', 'is_active', 'summary']  
 
 class ChatMessageSerializer(serializers.ModelSerializer):
     session_id = serializers.IntegerField(source='session.id', read_only=True)
@@ -22,4 +22,4 @@ class ChatSessionDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ChatSession
-        fields = ['session_id', 'user', 'created_at', 'updated_at', 'is_active', 'summary', 'messages']  # summary 필드 추가
+        fields = ['session_id', 'user', 'created_at', 'updated_at', 'is_active', 'summary', 'messages']  

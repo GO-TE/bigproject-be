@@ -70,16 +70,17 @@ class CommunityTests(APITestCase):
         print("test_article_list_view Response:", json.dumps(response.data, indent=2, ensure_ascii=False))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
-        self.assertNotIn('comments', response.data[0])  # Ensure comments are not in the response
-        self.assertEqual(response.data[0]['comment_count'], 0)  # Ensure comment count is correct
-
+        self.assertNotIn('comments', response.data[0])  
+        self.assertEqual(response.data[0]['comment_count'], 1 if self.article.id == response.data[0]['id'] else 0)
+        self.assertEqual(response.data[1]['comment_count'], 1 if self.article.id == response.data[1]['id'] else 0)
+        
     def test_article_detail_view(self):
         url = reverse('article-detail', args=[self.article.id])
         response = self.client.get(url)
         print("test_article_detail_view Response:", json.dumps(response.data, indent=2, ensure_ascii=False))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['title'], self.article.title)
-        self.assertIn('comments', response.data)  # Ensure comments are in the response
+        self.assertIn('comments', response.data)  
         self.assertEqual(len(response.data['comments']), 1)
         self.assertEqual(response.data['comments'][0]['message'], self.comment.message)
 
