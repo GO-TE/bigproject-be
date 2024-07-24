@@ -78,6 +78,6 @@ def news_crawling_job():
             )
 
     # cache 저장
-    recent_news_data = NewsArticle.objects.order_by('-id').values('id', 'title', 'image_link', 'news_agency', 'summary', 'timestamp')[:3]
+    recent_news_data = NewsArticle.objects.order_by('-id').values('id', 'title', 'image_link', 'news_agency', 'summary', 'timestamp')[:20]
     cache.set('news_articles', recent_news_data, timeout=60 * 60)
     print("Cron job executed, data stored in DB and Redis")
