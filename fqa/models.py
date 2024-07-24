@@ -51,3 +51,6 @@ class Glossary(models.Model):
 
     def __str__(self):
         return self.terminology
+
+
+# TODO : view 순으로 불러오기
