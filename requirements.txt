@@ -15,3 +15,5 @@ django-cron
 django-redis
 mysqlclient
 mysql-connector-python
+scikit-learn
+faiss-cpu
