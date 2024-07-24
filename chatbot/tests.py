@@ -69,7 +69,9 @@ class ChatbotTests(TestCase):
         }, format='json')
         self.assertEqual(response1.status_code, status.HTTP_200_OK)
         self.assertIn('response', response1.data)
+        self.assertIn('ui_texts', response1.data)
         result1 = response1.data['response']
+        ui_texts1 = response1.data['ui_texts']
 
         # 판례 검색 - 첫 번째 질문
         case_response1 = self.client.post('/chatbot/chat/precedent/', {
@@ -80,7 +82,7 @@ class ChatbotTests(TestCase):
         self.assertIn('case_results', case_response1.data)
         self.assertIn('ui_texts', case_response1.data)
         case_results1 = case_response1.data['case_results']
-        ui_texts1 = case_response1.data['ui_texts']
+        ui_texts2_1 = case_response1.data['ui_texts']
 
         # 세션 요약 확인
         session = ChatSession.objects.get(id=self.session.id)
@@ -94,7 +96,9 @@ class ChatbotTests(TestCase):
         }, format='json')
         self.assertEqual(response2.status_code, status.HTTP_200_OK)
         self.assertIn('response', response2.data)
+        self.assertIn('ui_texts', response2.data)
         result2 = response2.data['response']
+        ui_texts2 = response2.data['ui_texts']
 
         # 판례 검색 - 두 번째 질문
         case_response2 = self.client.post('/chatbot/chat/precedent/', {
@@ -105,7 +109,7 @@ class ChatbotTests(TestCase):
         self.assertIn('case_results', case_response2.data)
         self.assertIn('ui_texts', case_response2.data)
         case_results2 = case_response2.data['case_results']
-        ui_texts2 = case_response2.data['ui_texts']
+        ui_texts2_2 = case_response2.data['ui_texts']
 
         def convert_to_serializable(data):
             if isinstance(data, np.int64):
@@ -117,12 +121,14 @@ class ChatbotTests(TestCase):
         print(f"\nSession ID: {self.session.id}")
         print(f"First Query: {query1}")
         print(f"First Response: {result1}")
-        print(f"First Case Search Results: {json.dumps(case_results1, indent=2, ensure_ascii=False, default=convert_to_serializable)}")
         print(f"First UI Texts: {json.dumps(ui_texts1, indent=2, ensure_ascii=False)}")
+        print(f"First Case Search Results: {json.dumps(case_results1, indent=2, ensure_ascii=False, default=convert_to_serializable)}")
+        print(f"First Case UI Texts: {json.dumps(ui_texts2_1, indent=2, ensure_ascii=False)}")
         print(f"Second Query: {query2}")
         print(f"Second Response: {result2}")
-        print(f"Second Case Search Results: {json.dumps(case_results2, indent=2, ensure_ascii=False, default=convert_to_serializable)}")
         print(f"Second UI Texts: {json.dumps(ui_texts2, indent=2, ensure_ascii=False)}")
+        print(f"Second Case Search Results: {json.dumps(case_results2, indent=2, ensure_ascii=False, default=convert_to_serializable)}")
+        print(f"Second Case UI Texts: {json.dumps(ui_texts2_2, indent=2, ensure_ascii=False)}")
 
         # 세션 상세 정보와 메시지 확인
         response_detail = self.client.get(f'/chatbot/sessions/{self.session.id}/')
