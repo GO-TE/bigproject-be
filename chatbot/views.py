@@ -166,11 +166,11 @@ class CaseSearchView(APIView):
 
     def post(self, request):
         query = request.data.get('query')
-        detected_language = request.data.get('detected_language', 'ko')  # 감지된 언어를 받음
 
         if not query:
-            return Response({'error': 'Query is required.'}, status=status.HTTP_400_BAD_REQUEST)
-
+            # query에서 언어 감지
+            translated_query, detected_language = translate_text(query, 'en')  # 기본 번역 언어를 영어로 설정
+            
         try:
             # 질문(query)에 대해 판례 검색
             top_indices, top_scores = get_cosine_similarity(query, loaded_index_case, vectorizer)
