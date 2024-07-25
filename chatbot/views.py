@@ -182,18 +182,17 @@ class CaseSearchView(APIView):
             # 판례 내용을 감지된 언어로 번역하여 content에 저장
             for case in case_results:
                 translated_text, _ = translate_text(case['content'], detected_language)
-                case['content'] = translated_text
+                case['content'] = html.unescape(translated_text) 
 
             translated_ui_texts_2 = {
                 "case_example": translate_text("판례 사례", detected_language)[0],
                 "full_text": translate_text("내용 전문", detected_language)[0]
             }
 
-            case_results = html.unescape(case_results)
-
             return Response({"case_results": case_results, "ui_texts": translated_ui_texts_2}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 # 전체 채팅 세션 나열
 @permission_classes([IsAuthenticated])
