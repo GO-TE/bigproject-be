@@ -189,6 +189,8 @@ class CaseSearchView(APIView):
                 "full_text": translate_text("내용 전문", detected_language)[0]
             }
 
+            case_results = html.unescape(case_results)
+
             return Response({"case_results": case_results, "ui_texts": translated_ui_texts_2}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
