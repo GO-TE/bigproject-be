@@ -17,3 +17,4 @@ mysqlclient
 mysql-connector-python
 scikit-learn
 faiss-cpu
+djangorestframework-simplejwt

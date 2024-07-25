@@ -15,11 +15,26 @@
 `Python 3.11.5`
 
 ```shell
-pip install Django==5.0.6
-pip install djangorestframwork
-pip install django-redis
-pip install mysqlclient
-pip install djangorestframework-simplejwt
+pip install openai
+langchain
+django
+djangorestframework
+chromadb
+langchain_community
+langchain-openai
+requests
+deep-translator
+pytest
+Pillow
+opencv-python-headless
+django-cors-header
+django-cron
+django-redis
+mysqlclient
+mysql-connector-python
+scikit-learn
+faiss-cpu
+djangorestframework-simplejwt
 ```
 
 ---
