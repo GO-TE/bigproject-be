@@ -63,19 +63,15 @@ def news_crawling_job():
         news_data[i]['news_content'] = news_content
 
         # db에 저장
-        if NewsArticle.objects.filter(news_link=news_data[i]['news_link']).exists():
-            continue
-        else:
-            NewsArticle.objects.create(
-                title=news_data[i]['title'],
-                summary=news_data[i]['summary'],
-                news_link=news_data[i]['news_link'],
-                image_link=news_data[i]['image_link'],
-                news_agency=news_data[i]['news'],
-                timestamp=news_data[i]['timestamp'],
-                news_content=news_data[i]['news_content']
-            )
-
+        NewsArticle.objects.create(
+            title=news_data[i]['title'],
+            summary=news_data[i]['summary'],
+            news_link=news_data[i]['news_link'],
+            image_link=news_data[i]['image_link'],
+            news_agency=news_data[i]['news_agency'],
+            timestamp=news_data[i]['timestamp'],
+            news_content=news_data[i]['news_content']
+        )
     # cache 저장
     recent_news_data = NewsArticle.objects.order_by('-id').values('id', 'title', 'image_link', 'news_agency', 'summary', 'timestamp')[:20]
     cache.set('news_articles', recent_news_data, timeout=60 * 60)
