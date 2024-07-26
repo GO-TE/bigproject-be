@@ -129,6 +129,7 @@ class OpenAIChatView(APIView):
 
         # 관련 정보를 포함하여 대화 모델에 전달
         instructions = (
+            "받은 질문에 법률과 관련이 없는 내용이면 '안녕하세요. 도움이 필요하신가요? 같은 말을 해줘."
             "'저'라는 표현과 '제'라는 단어는 사용하지 마시고 상대방에게 말하듯이 해주세요. "
             "당신은 제3의 입장입니다. 자신의 회사가 아닌 사용자 입장에서 상황을 이해하고 공감해 주세요. "
             "상대방의 상황에 대해 적극적으로 공감하는 말을 먼저 해주세요. "
@@ -171,18 +172,26 @@ class CaseSearchView(APIView):
             return Response({'error': 'Query is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            translated_query, detected_language = translate_text(query, 'en')  # 기본 번역 언어를 영어로 설정
-            # 질문(query)에 대해 판례 검색
-            top_indices, top_scores = get_cosine_similarity(query, loaded_index_case, vectorizer)
+            translated_query, detected_language = translate_text(query, 'ko')
+            
+            # 판례 검색
+            top_indices, top_scores = get_cosine_similarity(translated_query, loaded_index_case, vectorizer)
+            
+            # 유사도 점수가 1초과 2미만일 경우에만 포함
             case_results = [
                 {"index": index, "score": score, "content": doc_contents_case[index]}
                 for index, score in zip(top_indices, top_scores)
+                if 1 < score < 2
             ]
+
+            # 유사도 점수가 1초과 2미만인 판례가 없을 경우 빈 배열 반환
+            if not case_results:
+                return Response({"case_results": [], "ui_texts": {}}, status=status.HTTP_200_OK)
 
             # 판례 내용을 감지된 언어로 번역하여 content에 저장
             for case in case_results:
                 translated_text, _ = translate_text(case['content'], detected_language)
-                case['content'] = html.unescape(translated_text) 
+                case['content'] = html.unescape(translated_text)
 
             translated_ui_texts_2 = {
                 "case_example": translate_text("판례 사례", detected_language)[0],
@@ -192,6 +201,7 @@ class CaseSearchView(APIView):
             return Response({"case_results": case_results, "ui_texts": translated_ui_texts_2}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 # 전체 채팅 세션 나열
