@@ -56,6 +56,7 @@ class UserLoginTests(APITestCase):
             'password': 'testpassword'
         }
         response = self.client.post(self.url, data)
+        self.assertEqual(response.data['nickname'], self.user.nickname)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_invalid_login(self):
