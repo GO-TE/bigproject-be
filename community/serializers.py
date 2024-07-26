@@ -4,11 +4,16 @@ from .models import Article, Comment
 
 class CommentSerializer(serializers.ModelSerializer):
     user_nickname = serializers.CharField(source='user.nickname', read_only=True)
+    is_author = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ['id', 'article', 'user_nickname', 'message', 'created_at', 'updated_at']
+        fields = ['id', 'article', 'user_nickname', 'message', 'created_at', 'updated_at', 'is_author']
         read_only_fields = ['user', 'created_at', 'updated_at']
+
+    def get_is_author(self, obj):
+        request = self.context.get('request')
+        return obj.user == request.user if request else False
 
 
 class ArticleSerializer(serializers.ModelSerializer):

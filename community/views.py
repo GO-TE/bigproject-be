@@ -17,6 +17,7 @@ from .serializers import (
 )
 from .permissions import IsOwnerOrReadOnly
 
+
 @permission_classes([AllowAny])
 class ArticleListView(APIView):
 
@@ -43,7 +44,8 @@ class ArticleListView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
-@permission_classes([IsAuthenticated,IsOwnerOrReadOnly])
+
+@permission_classes([IsAuthenticated, IsOwnerOrReadOnly])
 class ArticleDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Article.objects.select_related('user', 'category').prefetch_related('comment_set')
     serializer_class = ArticleSerializer
@@ -59,6 +61,7 @@ class ArticleDetailView(RetrieveUpdateDestroyAPIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
+
 @permission_classes([IsAuthenticated])
 class ArticleCreateView(CreateAPIView):
     queryset = Article.objects.all()
@@ -70,12 +73,14 @@ class ArticleCreateView(CreateAPIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
+
 @permission_classes([AllowAny])
 class CommentListView(ListAPIView):
     queryset = Comment.objects.select_related('article', 'user')
     serializer_class = CommentSerializer
 
-@permission_classes([IsAuthenticated,IsOwnerOrReadOnly])
+
+@permission_classes([IsAuthenticated, IsOwnerOrReadOnly])
 class CommentDetailView(RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.select_related('article', 'user')
     serializer_class = CommentSerializer
@@ -88,6 +93,7 @@ class CommentDetailView(RetrieveUpdateDestroyAPIView):
             raise NotFound("Comment not found")
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+
 
 @permission_classes([IsAuthenticated])
 class ArticleCommentCreateView(CreateAPIView):
@@ -104,13 +110,15 @@ class ArticleCommentCreateView(CreateAPIView):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
+
 @permission_classes([AllowAny])
 class ArticleByCategoryListView(APIView):
 
     def get(self, request, category_id):
         try:
             category = Category.objects.get(id=category_id)
-            articles = Article.objects.filter(category=category).select_related('user', 'category').order_by('-created_at')
+            articles = Article.objects.filter(category=category).select_related('user', 'category').order_by(
+                '-created_at')
 
             if not articles.exists():
                 return Response({"articles": [], "message": "No articles found in this category."}, status=200)

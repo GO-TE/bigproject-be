@@ -84,7 +84,8 @@ class LoginView(APIView):
             response = Response({
                 'message': Message.SUCCESS_LOGIN,
                 'access': str(access_token),
-                'refresh': str(refresh)
+                'refresh': str(refresh),
+                'nickname': user.nickname
             }, status=status.HTTP_200_OK)
 
             response.set_cookie(
