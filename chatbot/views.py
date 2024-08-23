@@ -7,6 +7,7 @@ import html
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from django.core.cache import cache  # 캐시 추가
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -52,11 +53,13 @@ d = loaded_index_case.d
 vectorizer = TfidfVectorizer(max_features=5000)
 vectorizer.fit(doc_contents_case)
 
+
 # 코사인 유사도 계산 함수
 def get_cosine_similarity(query, index, vectorizer):
     query_vector = vectorizer.transform([query]).toarray().astype('float32')
     D, I = index.search(query_vector, 3)  # 상위 3개 검색
     return I[0], D[0]
+
 
 def translate_text(text, target_language):
     url = f"https://translation.googleapis.com/language/translate/v2?key={translation_api_key}"
@@ -73,6 +76,20 @@ def translate_text(text, target_language):
     else:
         raise Exception(f"Error in translation: {response.status_code}, {response.text}")
 
+
+def get_chroma_retriever(nation, embeddings):
+    cache_key = f"chroma_retriever_{nation}"
+    retriever = cache.get(cache_key)
+
+    if retriever is None:
+        directory = f"./DB/{nation}db"
+        database = Chroma(persist_directory=directory, embedding_function=embeddings)
+        retriever = database.as_retriever(search_kwargs={"k": 3})
+        cache.set(cache_key, retriever, timeout=60 * 60)  # 1시간 캐싱
+
+    return retriever
+
+
 @permission_classes([IsAuthenticated])
 class OpenAIChatView(APIView):
 
@@ -83,33 +100,28 @@ class OpenAIChatView(APIView):
 
         if not session_id:
             return Response({'error': 'Session ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         if not query:
             return Response({'error': 'Query is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         if not nation:
             return Response({'error': 'Nation is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 벡터 데이터베이스 로드
-        directory = f"./DB/{nation}db"
-        database = Chroma(persist_directory=directory, embedding_function=embeddings)
+        # ChromaDB에서 검색기 가져오기 (캐싱 적용)
+        retriever = get_chroma_retriever(nation, embeddings)
 
         try:
             session = ChatSession.objects.prefetch_related('chatmessage_set').get(id=session_id, user=request.user)
         except ChatSession.DoesNotExist:
             return Response({'error': 'Session not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
 
-        # 검색기 설정
-        k = 3
-        retriever = database.as_retriever(search_kwargs={"k": k})
-
         # ConversationChain 설정
         memory = ConversationBufferMemory(output_key='result')
         conversation = RetrievalQA.from_llm(
-            llm=chat, 
-            retriever=retriever, 
-            memory=memory, 
-            return_source_documents=True, 
+            llm=chat,
+            retriever=retriever,
+            memory=memory,
+            return_source_documents=True,
             output_key='result'
         )
 
@@ -140,7 +152,7 @@ class OpenAIChatView(APIView):
 
         result = conversation(conversation_input)
         translated_result, _ = translate_text(result['result'], detected_language)
-        
+
         translated_result = html.unescape(translated_result)
 
         # 새 메시지 저장
@@ -160,6 +172,7 @@ class OpenAIChatView(APIView):
         }
 
         return Response({"response": translated_result, "ui_texts": translated_ui_texts}, status=status.HTTP_200_OK)
+
 
 @permission_classes([IsAuthenticated])
 class CaseSearchView(APIView):
@@ -182,14 +195,15 @@ class CaseSearchView(APIView):
             # 판례 내용을 감지된 언어로 번역하여 content에 저장
             for case in case_results:
                 translated_text, _ = translate_text(case['content'], detected_language)
-                case['content'] = html.unescape(translated_text) 
+                case['content'] = html.unescape(translated_text)
 
             translated_ui_texts_2 = {
                 "case_example": translate_text("판례 사례", detected_language)[0],
                 "full_text": translate_text("내용 전문", detected_language)[0]
             }
 
-            return Response({"case_results": case_results, "ui_texts": translated_ui_texts_2}, status=status.HTTP_200_OK)
+            return Response({"case_results": case_results, "ui_texts": translated_ui_texts_2},
+                            status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -203,6 +217,7 @@ class ChatSessionListView(generics.ListAPIView):
     def get_queryset(self):
         return ChatSession.objects.filter(user=self.request.user).prefetch_related('chatmessage_set')
 
+
 # 특정 채팅 세션 ID의 정보 및 메시지 나열, 세션 삭제
 @permission_classes([IsAuthenticated])
 class ChatSessionDetailView(generics.RetrieveDestroyAPIView):
@@ -215,16 +230,18 @@ class ChatSessionDetailView(generics.RetrieveDestroyAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        session = ChatSession.objects.prefetch_related('chatmessage_set').filter(id=instance.id, user=request.user).first()
+        session = ChatSession.objects.prefetch_related('chatmessage_set').filter(id=instance.id,
+                                                                                 user=request.user).first()
         if not session:
             return Response({'error': 'Session not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
-        
+
         serializer = self.get_serializer(instance)
         messages = ChatMessage.objects.filter(session=session).select_related('session')
         messages_serializer = ChatMessageSerializer(messages, many=True)
         data = serializer.data
         data['messages'] = messages_serializer.data
         return Response(data)
+
 
 # 새 대화 세션 생성
 @permission_classes([IsAuthenticated])
@@ -233,5 +250,5 @@ class CreateNewSessionView(APIView):
     def post(self, request):
         session = ChatSession.objects.create(user=request.user)
         serializer = ChatSessionSerializer(session)
-    
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
